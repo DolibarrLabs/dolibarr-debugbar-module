@@ -1,0 +1,65 @@
+# DebugBar MODULE - fr_FR
+#
+# Copyright (C) 2017 AXeL
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# Générique
+#
+DebugBar = Barre de débogage
+DebugBarDesc = Barre d'outils qui offre de nombreux outils pour simplifier le débogage
+
+#
+# Permissions
+#
+UseDebugBar = Utiliser la barre de débogage
+
+#
+# Collecteurs
+#
+Messages = Messages
+Request = Requete
+Config = Config
+Timeline = Ligne de temps
+RequestDuration = Duree de la requete
+MemoryUsage = Utilisation de la memoire
+Exceptions = Exceptions
+Database = Base de donnees
+Logs = Journaux
+
+Host = Hôte
+Port = Port
+Name = Nom
+User = Utilisateur
+Type = Type
+Prefix = Préfixe
+Charset = Charset
+
+Version = Version
+Theme = Thème
+Locale = Langue
+Currency = Devise
+Entity = Entité
+ListLimit = Limite de liste
+UploadSize = Taille de téléchargement
+
+Method = Méthode
+Server = Serveur
+ID = ID
+Pwd = Mdp
+TLS/STARTTLS = TLS/STARTTLS
+Status = Statut
+StatusDisabled = désactivé
+StatusEnabled = activé
