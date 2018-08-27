@@ -19,5 +19,6 @@ class modDebugBar extends DolibaseModule
 		$this->addPermission("use", "UseDebugBar", "u");
 
 		$this->enableHook('main');
+		$this->enableHook('login');
 	}
 }
