@@ -60,7 +60,7 @@ class DolibarrCollector extends DataCollector implements Renderable, AssetProvid
 		$info .= $langs->trans('Theme') . ': <strong>' . $conf->theme . '</strong><br>';
 		$info .= $langs->trans('Locale') . ': <strong>' . $conf->global->MAIN_LANG_DEFAULT . '</strong><br>';
 		$info .= $langs->trans('Currency') . ': <strong>' . $conf->currency . '</strong><br>';
-		$info .= $langs->trans('Entity') . ': <strong>' . $conf->entity . '</strong><br>';
+		$info .= $langs->trans('DolEntity') . ': <strong>' . $conf->entity . '</strong><br>';
 		$info .= $langs->trans('ListLimit') . ': <strong>' . ($conf->liste_limit ?: $conf->global->MAIN_SIZE_LISTE_LIMIT) . '</strong><br>';
 		$info .= $langs->trans('UploadSize') . ': <strong>' . $conf->global->MAIN_UPLOAD_DOC . '</strong>';
 

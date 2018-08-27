@@ -51,7 +51,7 @@ Version = Version
 Theme = Thème
 Locale = Langue
 Currency = Devise
-Entity = Entité
+DolEntity = Entité
 ListLimit = Limite de liste
 UploadSize = Taille de téléchargement
 

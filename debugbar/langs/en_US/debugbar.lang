@@ -51,7 +51,7 @@ Version = Version
 Theme = Theme
 Locale = Locale
 Currency = Currency
-Entity = Entity
+DolEntity = Entity
 ListLimit = List limit
 UploadSize = Upload size
 
