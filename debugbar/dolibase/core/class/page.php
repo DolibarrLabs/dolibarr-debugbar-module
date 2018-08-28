@@ -277,16 +277,16 @@ class Page
 			$this->close_form = false;
 		}
 
-		if (DOLIBASE_ALLOW_FUNC_CHAINING) return $this;
+		return $this; // allow chaining this function with another (need PHP >= 5)
 	}
 
 	/**
 	 * Opens a new html table
 	 *
 	 * @param   $header_columns   table header columns, e.: array(
-			 												array('name' => 'Column1', 'attr' => 'align="center"'),
-			 												array('name' => 'Column2', 'attr' => 'align="center" width="20"')
-		 												)
+	 *															array('name' => 'Column1', 'attr' => 'align="center"'),
+	 *															array('name' => 'Column2', 'attr' => 'align="center" width="20"')
+	 *														)
 	 * @param   $attr             table attributes
 	 * @param   $print_fiche_head print Dolibarr fiche head
 	 * @param   $summary          table summary
@@ -342,7 +342,7 @@ class Page
 			$this->close_table = false;
 		}
 
-		if (DOLIBASE_ALLOW_FUNC_CHAINING) return $this;
+		return $this; // allow chaining this function with another (need PHP >= 5)
 	}
 
 	/**
