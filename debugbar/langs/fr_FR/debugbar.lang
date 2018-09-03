@@ -20,6 +20,8 @@
 #
 DebugBar = Barre de débogage
 DebugBarDesc = Barre d'outils qui offre de nombreux outils pour simplifier le débogage
+GeneralOptions = Options générales
+LogsLinesNumber = Nombre de lignes à afficher sur l'onglet des journaux
 
 #
 # Permissions

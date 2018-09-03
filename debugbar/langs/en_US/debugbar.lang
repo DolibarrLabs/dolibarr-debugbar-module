@@ -20,6 +20,8 @@
 #
 DebugBar = Debug Bar
 DebugBarDesc = Toolbar that comes with a plenty of tools to simplify debugging
+GeneralOptions = General Options
+LogsLinesNumber = Number of lines to show on logs tab
 
 #
 # Permissions

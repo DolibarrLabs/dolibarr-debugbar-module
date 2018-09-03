@@ -10,8 +10,10 @@ $page = new SetupPage('Setup', '$user->admin');
 
 $page->begin();
 
-global $langs;
+$page->addSubtitle("GeneralOptions");
 
-print $langs->trans('NoSetupAvailable');
+$page->newOptionsTable();
+
+$page->addNumberOption("LogsLinesNumber", "DEBUGBAR_LOGS_LINES_NUMBER", 124, 10000);
 
 $page->end();

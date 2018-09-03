@@ -17,7 +17,7 @@ class DolLogsCollector extends MessagesCollector
 	/**
 	 * @var int number of lines to show
 	 */
-	protected $lines = 124;
+	protected $lines;
 
 	/**
 	 * Constructor
@@ -27,9 +27,12 @@ class DolLogsCollector extends MessagesCollector
 	 */
 	public function __construct($path = null, $name = 'logs')
 	{
+		global $conf;
+
 		parent::__construct($name);
 
 		$this->path = $path ?: $this->getLogsFile();
+		$this->lines = $conf->global->DEBUGBAR_LOGS_LINES_NUMBER ? $conf->global->DEBUGBAR_LOGS_LINES_NUMBER : 124;
 	}
 
 	/**
