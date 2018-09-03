@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -263,10 +263,11 @@ class CreatePage extends FormPage
 	 * @param     $selected_choice  selected choice
 	 * @param     $is_required      is field required or not
 	 * @param     $field_summary    field summary
+	 * @param     $show_empty       show empty value
 	 */
-	public function addListField($field_name, $list_name, $list_choices, $selected_choice = '', $is_required = false, $field_summary = '')
+	public function addListField($field_name, $list_name, $list_choices, $selected_choice = '', $is_required = false, $field_summary = '', $show_empty = 0)
 	{
-		$field_content = $this->form->listInput($list_name, $list_choices, $selected_choice);
+		$field_content = $this->form->listInput($list_name, $list_choices, $selected_choice, $show_empty);
 
 		$this->addField($field_name, $field_content, $is_required, $field_summary);
 	}
@@ -285,6 +286,25 @@ class CreatePage extends FormPage
 	public function addRadioListField($field_name, $radio_name, $radio_list, $selected = '', $is_required = false, $field_summary = '', $valign = 'middle')
 	{
 		$field_content = $this->form->radioList($radio_name, $radio_list, $selected);
+
+		$more_attr = ' valign="'.$valign.'"';
+		$this->addField($field_name, $field_content, $is_required, $field_summary, $more_attr);
+	}
+
+	/**
+	 * add a table field with a checkbox input(s)
+	 *
+	 * @param     $field_name       field name
+	 * @param     $check_name       checkbox inputs name
+	 * @param     $check_list       list of checkbox inputs, e.: array('check_1' => 'Checkbox 1', 'check_2' => 'Checkbox 2')
+	 * @param     $selected         selected checkbox input
+	 * @param     $is_required      is field required or not
+	 * @param     $field_summary    field summary
+	 * @param     $valign           field vertical align
+	 */
+	public function addCheckListField($field_name, $check_name, $check_list, $selected = '', $is_required = false, $field_summary = '', $valign = 'middle')
+	{
+		$field_content = $this->form->checkList($check_name, $check_list, $selected);
 
 		$more_attr = ' valign="'.$valign.'"';
 		$this->addField($field_name, $field_content, $is_required, $field_summary, $more_attr);

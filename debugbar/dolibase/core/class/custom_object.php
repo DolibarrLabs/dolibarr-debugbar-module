@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -52,6 +52,14 @@ class CustomObject extends CrudObject
 	 * @var string Document title
 	 */
 	public $doc_title = '';
+	/**
+	 * @var string Card url
+	 */
+	public $card_url = '';
+	/**
+	 * @var string Module part
+	 */
+	protected $modulepart;
 
 
 	/**
@@ -63,6 +71,7 @@ class CustomObject extends CrudObject
 		global $db;
 
 		$this->db = $db;
+		$this->modulepart = get_rights_class(false, true);
 	}
 
 	/**
@@ -79,7 +88,7 @@ class CustomObject extends CrudObject
 		// Add log
 		if ($res > 0) {
 			$log = new Logs();
-			$log->add($this->id, 'CREATE_OBJECT');
+			$log->add($this, 'CREATE_OBJECT');
 		}
 
 		return $res;
@@ -99,7 +108,7 @@ class CustomObject extends CrudObject
 		// Add log
 		if ($res > 0) {
 			$log = new Logs();
-			$log->add($this->id, 'UPDATE_OBJECT');
+			$log->add($this, 'UPDATE_OBJECT');
 		}
 
 		return $res;
@@ -118,7 +127,7 @@ class CustomObject extends CrudObject
 		// Add log
 		if ($res > 0) {
 			$log = new Logs();
-			$log->add($this->id, 'DELETE_OBJECT');
+			$log->add($this, 'DELETE_OBJECT');
 		}
 
 		return $res;
@@ -128,14 +137,16 @@ class CustomObject extends CrudObject
 	 *  Returns the reference to the following non used object depending on the active numbering model
 	 *  defined into MODULE_RIGHTS_CLASS_ADDON
 	 *
-	 *  @param	Societe		$soc  	Object thirdparty
-	 *  @return string      		Reference
+	 *  @param  string      $const_name_prefix     Constant name prefix
+	 *  @param  string      $model_name            Numbering model name
+	 *  @param  Societe     $soc                   Object thirdparty
+	 *  @return string      Reference
 	 */
-	public function getNextNumRef($soc = '')
+	public function getNextNumRef($const_name_prefix = '', $model_name = '', $soc = '')
 	{
 		global $conf, $langs, $dolibase_config;
 
-		$const_name = get_rights_class(true) . '_ADDON';
+		$const_name = (! empty($const_name_prefix) ? $const_name_prefix : get_rights_class(true)) . '_ADDON';
 
 		if (! empty($conf->global->$const_name))
 		{
@@ -162,7 +173,7 @@ class CustomObject extends CrudObject
 				return '';
 			}
 
-			$obj = new $classname();
+			$obj = new $classname($const_name_prefix, $model_name);
 			$numref = "";
 			$numref = $obj->getNextValue($soc);
 
@@ -205,16 +216,65 @@ class CustomObject extends CrudObject
 			$label .= '<b>' . $langs->trans('Ref') . ':</b> ' . $this->$ref_field;
 		}
 
-		$link = '<a href="'.dol_buildpath('/'.$dolibase_config['module']['folder'].'/card.php?id='.$this->id, 1).'" title="'.dol_escape_htmltag($label, 1).'" class="classfortooltip">';
+		$url = dol_buildpath((! empty($this->card_url) ? $this->card_url : '/'.$dolibase_config['module']['folder'].'/card.php') . '?id='.$this->id, 1);
+		$link = '<a href="'.$url.'" title="'.dol_escape_htmltag($label, 1).'" class="classfortooltip">';
 		$linkend = '</a>';
 
-		$picto = $dolibase_config['module']['picture'].'@'.$dolibase_config['module']['folder'];
+		$picto = (! empty($this->picto) ? $this->picto : $dolibase_config['module']['picture'].'@'.$dolibase_config['module']['folder']);
 
 		if ($withpicto) $result.= ($link.img_object($label, $picto, 'class="classfortooltip"').$linkend);
 		if ($withpicto && $withpicto != 2) $result.= ' ';
 		$result.= $link.$this->$ref_field.$linkend;
 
 		return $result;
+	}
+
+	/**
+	 *  Return label of status of object (draft, validated, ...)
+	 *
+	 *  @param      int         $mode        0=long label, 1=short label, 2=Picto + short label, 3=Picto, 4=Picto + long label, 5=Short label + Picto
+	 *  @return     string      Label
+	 */
+	public function getLibStatut($mode = 0)
+	{
+		return ''; // temporary fix to allow display banner without errors
+	}
+
+	/**
+	 * Get object image(s)
+	 *
+	 * @param     $default_image     Default image to show if no image is available
+	 */
+	public function getImage($default_image)
+	{
+		global $conf, $dolibase_config;
+
+		$out = '';
+		$image_available = false;
+		$dir = $conf->{$this->modulepart}->dir_output;
+
+		$out.= '<div class="floatleft inline-block valignmiddle divphotoref">';
+
+		if (method_exists($this, 'show_photos'))
+		{
+			$max = 5;
+			$width = 80;
+			$photos = $this->show_photos($this->modulepart, $dir ,'small', $max, 0, 0, 0, $width);
+
+			if ($this->nbphoto > 0) {
+				$out.= $photos;
+				$image_available = true;
+			}
+		}
+
+		if (! $image_available)
+		{
+			$out.= '<div class="photoref">'.img_picto('', $default_image.'@'.$dolibase_config['module']['folder']).'</div>';
+		}
+
+		$out.= '</div>';
+
+		return $out;
 	}
 
 	/**
@@ -289,8 +349,7 @@ class CustomObject extends CrudObject
 			require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 			$langs->load("other");
-			$modulepart = get_rights_class(false, true);
-			$upload_dir = $conf->$modulepart->dir_output;
+			$upload_dir = $conf->{$this->modulepart}->dir_output;
 			$file = $upload_dir . '/' . GETPOST('file');
 			$result = dol_delete_file($file, 0, 0, 0, $object);
 			if ($result)

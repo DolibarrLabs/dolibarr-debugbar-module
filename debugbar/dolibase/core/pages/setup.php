@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -28,6 +28,10 @@ class SetupPage extends FormPage
 	 */
 	protected $odd = true;
 	/**
+	 * @var string const name prefix
+	 */
+	protected $const_name_prefix;
+	/**
 	 * @var string numbering model const name
 	 */
 	protected $num_model_const_name;
@@ -39,6 +43,10 @@ class SetupPage extends FormPage
 	 * @var string document model type
 	 */
 	protected $doc_model_type;
+	/**
+	 * @var string document model preview picture
+	 */
+	protected $doc_model_preview_picture = '';
 	/**
 	 * @var string used to generate documents specimen
 	 */
@@ -68,27 +76,30 @@ class SetupPage extends FormPage
 	 * @param     $access_perm   			  Access permission
 	 * @param     $disable_default_actions    Disable default actions
 	 * @param     $add_extrafields_tab        Add extrafields tab
+	 * @param     $const_name_prefix          Constant name prefix
+	 * @param     $doc_model_type             Document model type
 	 * @param     $doc_object_class           Document object class
 	 * @param     $doc_object_path            Document object path
 	 */
-	public function __construct($page_title = 'Setup', $access_perm = '$user->admin', $disable_default_actions = false, $add_extrafields_tab = false, $doc_object_class = '', $doc_object_path = '')
+	public function __construct($page_title = 'Setup', $access_perm = '$user->admin', $disable_default_actions = false, $add_extrafields_tab = false, $const_name_prefix = '', $doc_model_type = '', $doc_object_class = '', $doc_object_path = '')
 	{
 		global $langs, $dolibase_config;
 
 		// Load lang files
 		$langs->load("admin");
-		$langs->load("setup_page@".$dolibase_config['main']['path']);
+		$langs->load("setup_page@".$dolibase_config['langs']['path']);
 
 		// Set attributes
 		$this->disable_default_actions = $disable_default_actions;
 		$this->add_extrafields_tab     = $add_extrafields_tab;
+		$this->const_name_prefix       = (! empty($const_name_prefix) ? $const_name_prefix : get_rights_class(true));
 
 		// Set numbering model constant name
-		$this->num_model_const_name = get_rights_class(true) . '_ADDON';
+		$this->num_model_const_name = $this->const_name_prefix . '_ADDON';
 
 		// Set document model constant name, type, object class & path
-		$this->doc_model_const_name = get_rights_class(true) . '_ADDON_PDF';
-		$this->doc_model_type       = get_rights_class();
+		$this->doc_model_const_name = $this->const_name_prefix . '_ADDON_PDF';
+		$this->doc_model_type       = (! empty($doc_model_type) ? $doc_model_type : get_rights_class());
 		$this->doc_object_class     = $doc_object_class;
 		$this->doc_object_path      = $doc_object_path;
 
@@ -112,6 +123,16 @@ class SetupPage extends FormPage
 		if (empty($enable) || verifCond($enable)) {
 			$this->title_link = '<a href="'.$link.'">'.$langs->trans($label).'</a>';
 		}
+	}
+
+	/**
+	 * Set Document model(s) preview picture
+	 *
+	 * @param    $picture     Document model preview picture
+	 */
+	public function setDocModelPreviewPicture($picture)
+	{
+		$this->doc_model_preview_picture = $picture;
 	}
 
 	/**
@@ -250,7 +271,7 @@ class SetupPage extends FormPage
 				}
 				else
 				{
-					//$object->doc_title     = 'SPECIMEN';
+					$object->doc_title     = 'SPECIMEN';
 					$object->ref           = 'SPECIMEN';
 					$object->specimen      = 1;
 					$object->creation_date = time();
@@ -272,8 +293,7 @@ class SetupPage extends FormPage
 
 					if ($module->write_file($object, $langs) > 0)
 					{
-						$modulepart = get_rights_class(false, true);
-						dolibase_redirect(DOL_URL_ROOT."/document.php?modulepart=".$modulepart."&file=SPECIMEN.pdf");
+						dolibase_redirect(DOL_URL_ROOT."/document.php?modulepart=".$this->modulepart."&file=SPECIMEN.pdf");
 					}
 					else
 					{
@@ -335,7 +355,6 @@ class SetupPage extends FormPage
 	{
 		$options_table_cols = array(
 								array('name' => $first_column_name, 'attr' => ''),
-								array('name' => '&nbsp;', 'attr' => 'align="center" width="20"'),
 								array('name' => 'Value', 'attr' => 'align="center" width="100"')
 							);
 
@@ -351,14 +370,13 @@ class SetupPage extends FormPage
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
 	 */
-	public function addOption($option_desc, $option_content, $const_name = '', $morehtmlright = '', $width = 250)
+	public function addOption($option_desc, $option_content, $const_name = '', $morehtmlright = '', $width = 300)
 	{
 		global $conf, $langs, $bc;
 
 		$this->odd = !$this->odd;
 
 		echo '<tr '.$bc[$this->odd].'><td>'.$langs->trans($option_desc).$morehtmlright.'</td>'."\n";
-		echo '<td align="center">&nbsp;</td>'."\n";
 		echo '<td width="'.$width.'" align="right">'."\n";
 		if (! empty($const_name)) {
 			echo '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">'."\n";
@@ -388,7 +406,6 @@ class SetupPage extends FormPage
 		$more_attr = $disabled ? ' class="disabled nopointerevents"' : '';
 
 		echo '<tr '.$bc[$this->odd].'><td'.$more_attr.'>'.$langs->trans($option_desc).$morehtmlright.'</td>'."\n";
-		echo '<td'.$more_attr.' align="center">&nbsp;</td>'."\n";
 		echo '<td'.$more_attr.' align="right">'."\n";
 		if (empty($conf->global->$const_name))
 		{
@@ -410,7 +427,7 @@ class SetupPage extends FormPage
 	 * @param     $size              Option textbox size
 	 * @param     $width             Option last column/td width
 	 */
-	public function addTextOption($option_desc, $const_name, $morehtmlright = '', $size = 16, $width = 250)
+	public function addTextOption($option_desc, $const_name, $morehtmlright = '', $size = 16, $width = 300)
 	{
 		global $conf;
 
@@ -429,7 +446,7 @@ class SetupPage extends FormPage
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
 	 */
-	public function addNumberOption($option_desc, $const_name, $min = 0, $max = 100, $morehtmlright = '', $width = 250)
+	public function addNumberOption($option_desc, $const_name, $min = 0, $max = 100, $morehtmlright = '', $width = 300)
 	{
 		global $conf;
 
@@ -448,7 +465,7 @@ class SetupPage extends FormPage
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
 	 */
-	public function addRangeOption($option_desc, $const_name, $min = 0, $max = 100, $morehtmlright = '', $width = 250)
+	public function addRangeOption($option_desc, $const_name, $min = 0, $max = 100, $morehtmlright = '', $width = 300)
 	{
 		global $conf;
 
@@ -466,7 +483,7 @@ class SetupPage extends FormPage
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
 	 */
-	public function addListOption($option_desc, $const_name, $list, $morehtmlright = '', $width = 250)
+	public function addListOption($option_desc, $const_name, $list, $morehtmlright = '', $width = 300)
 	{
 		global $conf;
 
@@ -483,7 +500,7 @@ class SetupPage extends FormPage
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
 	 */
-	public function addColorOption($option_desc, $const_name, $morehtmlright = '', $width = 250)
+	public function addColorOption($option_desc, $const_name, $morehtmlright = '', $width = 300)
 	{
 		global $conf;
 
@@ -522,8 +539,9 @@ class SetupPage extends FormPage
 	/**
 	 * Print numbering models
 	 *
+	 * @param     $model_name     Numbering model name
 	 */
-	public function printNumModels()
+	public function printNumModels($model_name = '')
 	{
 		global $conf, $langs;
 
@@ -559,7 +577,7 @@ class SetupPage extends FormPage
 
 						$classname = 'NumModel'.ucfirst($file);
 
-						$model = new $classname();
+						$model = new $classname($this->const_name_prefix, $model_name);
 
 						// Show models according to features level
 						if ($model->version == 'development'  && $conf->global->MAIN_FEATURES_LEVEL < 2) continue;
@@ -749,7 +767,7 @@ class SetupPage extends FormPage
 							echo '<td align="center">';
 							if ($model->type == 'pdf')
 							{
-								$picto = $dolibase_config['module']['picture'].'@'.$dolibase_config['module']['folder'];
+								$picto = (! empty($this->doc_model_preview_picture) ? $this->doc_model_preview_picture : $dolibase_config['module']['picture'].'@'.$dolibase_config['module']['folder']);
 								echo '<a href="'.$_SERVER["PHP_SELF"].'?action=specimen&model='.$model->name.'">'.img_object($langs->trans("Preview"),$picto).'</a>';
 							}
 							else

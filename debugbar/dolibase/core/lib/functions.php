@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -355,6 +355,7 @@ if (! function_exists('stop_time_measure'))
  * Dumps all the object propreties and its associations recursively into an array
  *
  * @param     $obj     Object
+ * @return    array
  */
 if (! function_exists('object_to_array'))
 {

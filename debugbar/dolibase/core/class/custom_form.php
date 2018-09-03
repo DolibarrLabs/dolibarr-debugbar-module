@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -177,8 +177,46 @@ class CustomForm extends Form
 			}
 			if ($count > 0) $out.= "<br>\n";
 			$out.= '<span>';
-			$out.= '<input type="radio" class="dolibase_radio" name="'.$name.'" id="'.$val.'" value="'.$val.'"'.($selected == $val || ($count == 0 && empty($selected)) ? ' checked' : '').'>';
-			$out.= ' <label for="'.$val.'">' . $langs->trans($label) . '</label>';
+			$out.= '<input type="radio" class="dolibase_radio" name="'.$name.'" id="'.$name.'-'.$val.'" value="'.$val.'"'.($selected == $val || ($count == 0 && empty($selected)) ? ' checked' : '').'>';
+			$out.= ' <label for="'.$name.'-'.$val.'">' . $langs->trans($label) . '</label>';
+			$out.= '</span>';
+			$out.= $content;
+			$count++;
+		}
+
+		if ($add_br) {
+			$out.= "<br>\n";
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Return a check list
+	 *
+	 * @param   $name      list name
+	 * @param   $values    list values
+	 * @param   $selected  list selected value(s)
+	 * @param   $add_br    add a line break in the end
+	 * @return  string     list HTML
+	 */
+	public function checkList($name, $values, $selected, $add_br = false)
+	{
+		global $langs;
+
+		$count = 0;
+		$out = '';
+		foreach ($values as $val => $label) {
+			$content = '';
+			if (is_array($label)) {
+				$val = $label['value'];
+				$content = $label['content'];
+				$label = $label['label'];
+			}
+			if ($count > 0) $out.= "<br>\n";
+			$out.= '<span>';
+			$out.= '<input type="checkbox" class="dolibase_radio" name="'.$name.'[]" id="'.$name.'-'.$val.'" value="'.$val.'"'.(! empty($selected) && in_array($val, $selected) ? ' checked' : '').'>';
+			$out.= ' <label for="'.$name.'-'.$val.'">' . $langs->trans($label) . '</label>';
 			$out.= '</span>';
 			$out.= $content;
 			$count++;

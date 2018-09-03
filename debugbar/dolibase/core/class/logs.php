@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -53,24 +53,25 @@ class Logs extends CrudObject
 	/**
 	 * Add log into database
 	 *
-	 * @param  int    $object_id object id
+	 * @param  object $object object
 	 * @param  string $action log action
 	 * @param  int    $notrigger 0=launch triggers after, 1=disable triggers
 	 * @return int    <0 if KO, Id of created object if OK
 	 */
-	public function add($object_id, $action, $notrigger = 1)
+	public function add($object, $action, $notrigger = 1)
 	{
 		global $dolibase_config, $user;
 
 		if (isset($dolibase_config['module']['enable_logs']) && $dolibase_config['module']['enable_logs'])
 		{
 			$info = array(
-				'module_id'   => $dolibase_config['module']['number'],
-				'module_name' => $dolibase_config['module']['name'],
-				'object_id'   => $object_id,
-				'action'      => $action,
-				'datec'       => dolibase_now(true),
-				'fk_user'     => $user->id
+				'module_id'      => $dolibase_config['module']['number'],
+				'module_name'    => $dolibase_config['module']['name'],
+				'object_id'      => $object->id,
+				'object_element' => $object->element,
+				'action'         => $action,
+				'datec'          => dolibase_now(true),
+				'fk_user'        => $user->id
 			);
 
 			return $this->create($info, $notrigger);

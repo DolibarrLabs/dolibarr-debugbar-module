@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -42,7 +42,7 @@ class AboutPage extends Page
 
 		// Load lang files
 		$langs->load("admin");
-		$langs->load("about_page@".$dolibase_config['main']['path']);
+		$langs->load("about_page@".$dolibase_config['langs']['path']);
 
 		// Set attributes
 		$this->add_extrafields_tab = $add_extrafields_tab;

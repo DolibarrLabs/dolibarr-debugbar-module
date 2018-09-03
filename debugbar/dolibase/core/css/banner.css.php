@@ -19,13 +19,17 @@ header('Content-Type: text/css');
 
 ?>
 
-.hideonprint {
-	display: none;
+/*--- Hide Banner second picture ---*/
+
+.arearef .floatleft .divphotoref:nth-child(2) {
+	display: none !important;
 }
 
-.highlightedonprint {
-	font-weight: bold;
-	background-color: #a3cbe8;
+/*--- Set default image size ---*/
+
+.divphotoref .photoref img {
+	width: 40px;
+	height: 40px;
 }
 
 <?php

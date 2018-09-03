@@ -9,9 +9,9 @@
  *
  * @package     Dolibase
  * @author      AXeL
- * @copyright	Copyright (c) 2018 - 2019, AXeL-dev
- * @license
- * @link
+ * @copyright   Copyright (c) 2018 - 2019, AXeL-dev
+ * @license     MIT
+ * @link        https://github.com/AXeL-dev/dolibase
  * 
  */
 
@@ -37,6 +37,9 @@ class DocumentPage extends Page
 
 		// Load lang files
 		$langs->load("other");
+
+		// Add CSS files
+		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('/core/css/banner.css.php').'">'."\n");
 
 		parent::__construct($page_title, $access_perm);
 	}
@@ -80,7 +83,7 @@ class DocumentPage extends Page
 
 		include_once DOL_DOCUMENT_ROOT.'/core/class/link.class.php';
 
-		$modulepart  = get_rights_class(false, true);
+		$modulepart  = get_rights_class(false, true); // cannot use '$this->modulepart' because this function is static
 		$upload_dir  = $conf->$modulepart->dir_output . "/" . dol_sanitizeFileName($object->ref);
 		$nbFiles     = count(dol_dir_list($upload_dir, 'files', 0, '', '(\.meta|_preview.*\.png)$'));
 		$nbLinks     = Link::count($db, $object->element, $object->id);
@@ -100,8 +103,7 @@ class DocumentPage extends Page
 		{
 			global $langs, $conf, $db, $hookmanager, $maxwidthmini, $maxheightmini;
 
-			$modulepart = get_rights_class(false, true);
-			$upload_dir = $conf->$modulepart->dir_output.'/'.dol_sanitizeFileName($object->ref);
+			$upload_dir = $conf->{$this->modulepart}->dir_output.'/'.dol_sanitizeFileName($object->ref);
 
 			// Get parameters
 			$action  = GETPOST('action', 'alpha');
@@ -132,8 +134,7 @@ class DocumentPage extends Page
 		{
 			global $langs, $conf, $user, $db, $sortfield, $sortorder;
 
-			$modulepart = get_rights_class(false, true);
-			$upload_dir = $conf->$modulepart->dir_output.'/'.dol_sanitizeFileName($object->ref);
+			$upload_dir = $conf->{$this->modulepart}->dir_output.'/'.dol_sanitizeFileName($object->ref);
 
 			// Get parameters
 			$action    = GETPOST('action', 'alpha');
@@ -161,9 +162,9 @@ class DocumentPage extends Page
 			echo '</div>';
 
 			$form         = new Form($db);
-			$rights_class = get_rights_class();
-			$permission   = $user->rights->$rights_class->create;
-			$permtoedit   = $user->rights->$rights_class->modify;
+			$permission   = $user->rights->{$this->rights_class}->create;
+			$permtoedit   = $user->rights->{$this->rights_class}->modify;
+			$modulepart   = $this->modulepart;
 			$param        = '';
 			include_once DOL_DOCUMENT_ROOT . '/core/tpl/document_actions_post_headers.tpl.php';
 		}
