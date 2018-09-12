@@ -55,7 +55,7 @@ class DolibaseModule extends DolibarrModules
 	 */
 	public function __construct($db)
 	{
-		global $dolibase_config, $langs;
+		global $dolibase_config, $langs, $conf;
 
 		// Check if config array is empty
 		if (empty($dolibase_config)) die('Dolibase::Module::Error module configuration not found.');
@@ -82,7 +82,11 @@ class DolibaseModule extends DolibarrModules
 		$this->picto           = $this->config['module']['picture']."@".$this->config['module']['folder'];
 
 		// Module parts (css, js, ...)
-		$this->module_parts    = array();
+		$this->module_parts    = array(
+			'css'   => array(),
+			'js'    => array(),
+			'hooks' => array()
+		);
 
 		// Data directories to create when module is enabled
 		$this->dirs            = $this->config['module']['dirs'];
@@ -114,13 +118,18 @@ class DolibaseModule extends DolibarrModules
 		$this->dictionaries = array();
 
 		// Addons
-		$this->addons = array();
+		$this->addons = array(
+			'num' => array(),
+			'doc' => array()
+		);
 
 		// Load module settings
 		$this->loadSettings();
 
 		// Check for updates
-		$this->checkUpdates($langs);
+		if (! $conf->global->DOLIBASE_DISABLE_CHECK_FOR_UPDATES) {
+			$this->checkUpdates($langs);
+		}
 	}
 
 	/**
@@ -202,6 +211,7 @@ class DolibaseModule extends DolibarrModules
 				if ($key == 'doc') {
 					$this->addConstant($const_prefix . '_ADDON_PDF', $addon['name']);
 					$type = (isset($addon['type']) && ! empty($addon['type']) ? $addon['type'] : get_rights_class());
+					delDocumentModel($addon['name'], $type);
 					addDocumentModel($addon['name'], $type);
 				}
 				else {
@@ -449,6 +459,15 @@ class DolibaseModule extends DolibarrModules
 	public function enableHook($hook)
 	{
 		$this->addModulePart('hooks', $hook);
+	}
+
+	/**
+	 * Enable triggers
+	 *
+	 */
+	public function enableTriggers()
+	{
+		$this->module_parts['triggers'] = 1;
 	}
 
 	/**

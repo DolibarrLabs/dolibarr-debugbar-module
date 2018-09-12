@@ -51,12 +51,15 @@ class ListPage extends FormPage
 	 * 
 	 * @param     $page_title     HTML page title
 	 * @param     $access_perm    Access permission
+	 * @param     $contextpage    Page context
 	 */
-	public function __construct($page_title, $access_perm = '')
+	public function __construct($page_title, $access_perm = '', $contextpage = '')
 	{
 		global $db;
 
+		// Set page attributes
 		$this->extrafields = new ExtraFields($db);
+		$this->contextpage = (! empty($contextpage) ? $contextpage : get_rights_class(false, true) . 'list');
 
 		parent::__construct($page_title, $access_perm);
 	}
@@ -68,8 +71,6 @@ class ListPage extends FormPage
 	protected function loadDefaultActions()
 	{
 		global $hookmanager;
-
-		$this->contextpage = get_rights_class(false, true) . 'list';
 
 		// Initialize technical object to manage hooks of thirdparties.
 		$hookmanager->initHooks(array($this->contextpage));
@@ -99,8 +100,9 @@ class ListPage extends FormPage
 	 * @param   $fieldstosearchall   Fields to search all
 	 * @param   $sortfield           Sort field
 	 * @param   $sortorder           Sort order
+	 * @param   $morehtmlright       More HTML to show on the right of the list title
 	 */
-	public function openList($title, $picture = 'title_generic.png', $list_fields, $search_fields, $nbofshownrecords, $nbtotalofrecords, $fieldstosearchall = array(), $sortfield = '', $sortorder = '')
+	public function openList($title, $picture = 'title_generic.png', $list_fields, $search_fields, $nbofshownrecords, $nbtotalofrecords, $fieldstosearchall = array(), $sortfield = '', $sortorder = '', $morehtmlright = '')
 	{
 		global $langs, $conf;
 
@@ -138,7 +140,7 @@ class ListPage extends FormPage
 
 		// List title
 		$title = $langs->trans($title);
-		print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, '', $nbofshownrecords, $nbtotalofrecords, $picture, 0, '', '', $limit);
+		print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, '', $nbofshownrecords, $nbtotalofrecords, $picture, 0, $morehtmlright, '', $limit);
 
 		if ($sall)
 		{
@@ -169,6 +171,7 @@ class ListPage extends FormPage
 		// This change content of $arrayfields
 		$varpage = empty($contextpage) ? $_SERVER["PHP_SELF"] : $contextpage;
 		$selectedfields = $this->form->multiSelectArrayWithCheckbox('selectedfields', $this->arrayfields, $varpage);
+		$old_dolibarr = compare_version(DOL_VERSION, '<', '6.0.0');
 
 		// List fields
 		echo '<tr class="liste_titre">';
@@ -176,7 +179,8 @@ class ListPage extends FormPage
 			if (! empty($this->arrayfields[$field['name']]['checked'])) {
 				$field_align = (isset($field['align']) ? 'align="'.$field['align'].'"' : '');
 				$field_class = (isset($field['class']) ? $field['class'].' ' : '');
-				print_liste_field_titre($langs->trans($field['label']), $_SERVER["PHP_SELF"], $field['name'], '', $param, $field_align, $sortfield, $sortorder, $field_class);
+				$label = $old_dolibarr ? $langs->trans($field['label']) : $field['label'];
+				print_liste_field_titre($label, $_SERVER["PHP_SELF"], $field['name'], '', $param, $field_align, $sortfield, $sortorder, $field_class);
 			}
 		}
 		// Loop to show all columns of extrafields for the title line
@@ -189,7 +193,8 @@ class ListPage extends FormPage
 					$align = $this->extrafields->getAlignFlag($key);
 					$sortonfield = "ef.".$key;
 					if (! empty($this->extrafields->attribute_computed[$key])) $sortonfield = '';
-					echo getTitleFieldOfList($langs->trans($this->extralabels[$key]), 0, $_SERVER["PHP_SELF"], $sortonfield, "", $param, ($align?'align="'.$align.'"':''), $sortfield, $sortorder)."\n";
+					$label = $old_dolibarr ? $langs->trans($this->extralabels[$key]) : $this->extralabels[$key];
+					echo getTitleFieldOfList($label, 0, $_SERVER["PHP_SELF"], $sortonfield, "", $param, ($align?'align="'.$align.'"':''), $sortfield, $sortorder)."\n";
 				}
 			}
 		}

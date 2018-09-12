@@ -1,4 +1,4 @@
-# Dolibase Log Page - it_IT
+# Dolibase Calendar Page - pl_PL
 #
 # Copyright (C) 2018 AXel
 #
@@ -18,16 +18,12 @@
 #
 # Generic
 #
-LogAction = Azione
-LogUser = Utente
-LogDate = Data
-CurrentHour = Tempo PHP (server)
-ClientHour = Tempo cliente (utente)
-NoLogsAvailable = Nessun registro disponibile.
-
-#
-# Actions
-#
-CREATE_OBJECT = <b>Creare</b>
-UPDATE_OBJECT = <b>Modificare</b>
-DELETE_OBJECT = <b>Elimina</b>
+DayView = Codziennie
+WeekView = Co tydzień
+MonthView = Miesięczny
+Refresh = Odświeżać
+Print = Wydrukować
+Previous = Poprzedni
+Next = Kolejny
+Today = Dzisiaj
+Week = Tydzień
