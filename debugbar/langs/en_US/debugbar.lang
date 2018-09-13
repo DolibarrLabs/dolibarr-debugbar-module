@@ -38,7 +38,7 @@ Timeline = Timeline
 RequestDuration = Request Duration
 MemoryUsage = Memory Usage
 Exceptions = Exceptions
-Database = Database
+SqlDatabase = Database
 Logs = Logs
 
 Host = Host

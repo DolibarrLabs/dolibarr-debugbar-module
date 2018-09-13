@@ -38,7 +38,7 @@ Timeline = Ligne de temps
 RequestDuration = Duree de la requete
 MemoryUsage = Utilisation de la memoire
 Exceptions = Exceptions
-Database = Base de donnees
+SqlDatabase = Base de donnees
 Logs = Journaux
 
 Host = Hôte
