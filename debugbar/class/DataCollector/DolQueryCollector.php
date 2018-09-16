@@ -87,7 +87,7 @@ class DolQueryCollector extends DataCollector implements Renderable, AssetProvid
 	{
 		global $langs;
 
-		$title = $langs->transnoentities('SqlDatabase');
+		$title = $langs->transnoentities('Database');
 
 		return array(
 			"$title" => array(
