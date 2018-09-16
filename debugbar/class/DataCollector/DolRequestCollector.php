@@ -17,7 +17,7 @@ class DolRequestCollector extends RequestDataCollector
 		global $langs;
 
 		return array(
-			$langs->trans('Request') => array(
+			$langs->transnoentities('Request') => array(
 				"icon" => "tags",
 				"widget" => "PhpDebugBar.Widgets.VariableListWidget",
 				"map" => "request",

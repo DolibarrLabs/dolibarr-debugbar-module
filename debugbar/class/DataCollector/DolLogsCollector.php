@@ -43,7 +43,7 @@ class DolLogsCollector extends MessagesCollector
 	{
 		global $langs;
 
-		$title = $langs->trans('Logs');
+		$title = $langs->transnoentities('Logs');
 		$name = $this->getName();
 
 		return array(

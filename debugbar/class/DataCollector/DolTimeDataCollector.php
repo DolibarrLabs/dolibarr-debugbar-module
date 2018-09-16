@@ -19,11 +19,11 @@ class DolTimeDataCollector extends TimeDataCollector
 		return array(
 			"time" => array(
 				"icon" => "clock-o",
-				"tooltip" => $langs->trans('RequestDuration'),
+				"tooltip" => $langs->transnoentities('RequestDuration'),
 				"map" => "time.duration_str",
 				"default" => "'0ms'"
 			),
-			$langs->trans('Timeline') => array(
+			$langs->transnoentities('Timeline') => array(
 				"icon" => "tasks",
 				"widget" => "PhpDebugBar.Widgets.TimelineWidget",
 				"map" => "time",

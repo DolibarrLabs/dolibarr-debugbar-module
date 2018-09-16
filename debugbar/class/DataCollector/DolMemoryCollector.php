@@ -19,7 +19,7 @@ class DolMemoryCollector extends MemoryCollector
 		return array(
 			"memory" => array(
 				"icon" => "cogs",
-				"tooltip" => $langs->trans('MemoryUsage'),
+				"tooltip" => $langs->transnoentities('MemoryUsage'),
 				"map" => "memory.peak_usage_str",
 				"default" => "'0B'"
 			)

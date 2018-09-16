@@ -17,7 +17,7 @@ class DolConfigCollector extends ConfigCollector
 		global $langs;
 
 		return array(
-			$langs->trans('Config') => array(
+			$langs->transnoentities('Config') => array(
 				"icon" => "gear",
 				"widget" => "PhpDebugBar.Widgets.VariableListWidget",
 				"map" => $this->getName(),

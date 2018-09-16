@@ -32,13 +32,13 @@ UseDebugBar = Utiliser la barre de débogage
 # Collecteurs
 #
 Messages = Messages
-Request = Requete
+Request = Requête
 Config = Config
 Timeline = Ligne de temps
-RequestDuration = Duree de la requete
-MemoryUsage = Utilisation de la memoire
+RequestDuration = Durée de la requête
+MemoryUsage = Utilisation de la mémoire
 Exceptions = Exceptions
-SqlDatabase = Base de donnees
+SqlDatabase = Base de données
 Logs = Journaux
 
 Host = Hôte

@@ -16,7 +16,7 @@ class DolExceptionsCollector extends ExceptionsCollector
 	{
 		global $langs;
 
-		$title = $langs->trans('Exceptions');
+		$title = $langs->transnoentities('Exceptions');
 
 		return array(
 			"$title" => array(

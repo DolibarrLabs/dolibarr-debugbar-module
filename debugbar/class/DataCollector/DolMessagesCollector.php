@@ -16,7 +16,7 @@ class DolMessagesCollector extends MessagesCollector
 	{
 		global $langs;
 
-		$title = $langs->trans('Messages');
+		$title = $langs->transnoentities('Messages');
 		$name = $this->getName();
 
 		return array(

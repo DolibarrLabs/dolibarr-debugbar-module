@@ -9,7 +9,7 @@ global $dolibase_config;
 $dolibase_config['module'] = array(
 	'name'         => 'DebugBar',
 	'desc'         => 'DebugBarDesc',
-	'version'      => '1.5', // possible values: 'development', 'experimental', 'dolibarr' or version
+	'version'      => '1.6', // possible values: 'development', 'experimental', 'dolibarr' or version
 	'number'       => '447000', // e.: 110000 (avoid small numbers because they are used for core modules)
 	'family'       => 'base', // possible values: 'crm', 'financial', 'hr', 'projects', 'products', 'ecm', 'technic', 'other'
 	'position'     => 500,
