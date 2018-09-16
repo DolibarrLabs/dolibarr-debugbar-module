@@ -5,15 +5,16 @@ Autoloader::register();
 
 use \DebugBar\DebugBar;
 use \DebugBar\DataCollector\PhpInfoCollector;
-dol_include_once('/debugbar/class/DataCollector/DolMessagesCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolRequestCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolConfigCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolTimeDataCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolMemoryCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolExceptionsCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolQueryCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolibarrCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolLogsCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolMessagesCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolRequestCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolConfigCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolTimeDataCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolMemoryCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolExceptionsCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolQueryCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolibarrCollector.php');
+//dol_include_once('/debugbar/class/DataCollector/DolLogsCollector.php');
+dol_include_once('/debugbar/class/DataCollector/DebugBar.php');
 
 /**
  * DolibarrDebugBar class
