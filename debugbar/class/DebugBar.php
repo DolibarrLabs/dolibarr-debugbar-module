@@ -5,7 +5,7 @@ dol_include_once('/debugbar/class/autoloader.php');
 use \DebugBar\DebugBar;
 use \DebugBar\DataCollector\PhpInfoCollector;
 dol_include_once('/debugbar/class/DataCollector/DolMessagesCollector.php');
-dol_include_once('/debugbar/class/DataCollector/DolRequestCollector.php');
+dol_include_once('/debugbar/class/DataCollector/DolRequestDataCollector.php');
 dol_include_once('/debugbar/class/DataCollector/DolConfigCollector.php');
 dol_include_once('/debugbar/class/DataCollector/DolTimeDataCollector.php');
 dol_include_once('/debugbar/class/DataCollector/DolMemoryCollector.php');
@@ -32,7 +32,7 @@ class DolibarrDebugBar extends DebugBar
 
 		//$this->addCollector(new PhpInfoCollector());
 		$this->addCollector(new DolMessagesCollector());
-		$this->addCollector(new DolRequestCollector());
+		$this->addCollector(new DolRequestDataCollector());
 		$this->addCollector(new DolConfigCollector());
 		$this->addCollector(new DolTimeDataCollector());
 		$this->addCollector(new DolMemoryCollector());

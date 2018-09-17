@@ -3,10 +3,10 @@
 use \DebugBar\DataCollector\RequestDataCollector;
 
 /**
- * DolRequestCollector class
+ * DolRequestDataCollector class
  */
 
-class DolRequestCollector extends RequestDataCollector
+class DolRequestDataCollector extends RequestDataCollector
 {
 	/**
 	 *	Return widget settings
