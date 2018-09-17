@@ -1,7 +1,6 @@
 <?php
 
 dol_include_once('/debugbar/class/autoloader.php');
-Autoloader::register();
 
 use \DebugBar\DebugBar;
 use \DebugBar\DataCollector\PhpInfoCollector;
