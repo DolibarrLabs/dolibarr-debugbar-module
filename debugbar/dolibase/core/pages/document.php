@@ -16,8 +16,8 @@
  */
 
 dolibase_include_once('/core/class/page.php');
-include_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
-include_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+include_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+include_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 
 /**
  * DocumentPage class
@@ -83,7 +83,7 @@ class DocumentPage extends Page
 
 		include_once DOL_DOCUMENT_ROOT.'/core/class/link.class.php';
 
-		$modulepart  = get_rights_class(false, true); // cannot use '$this->modulepart' because this function is static
+		$modulepart  = get_modulepart(); // cannot use '$this->modulepart' because this function is static
 		$upload_dir  = $conf->$modulepart->dir_output . "/" . dol_sanitizeFileName($object->ref);
 		$nbFiles     = count(dol_dir_list($upload_dir, 'files', 0, '', '(\.meta|_preview.*\.png)$'));
 		$nbLinks     = Link::count($db, $object->element, $object->id);
@@ -97,9 +97,9 @@ class DocumentPage extends Page
 	 *
 	 * @param     $object         object
 	 */
-	public function begin($object = '')
+	public function begin($object = null)
 	{
-		if (! empty($object) && isset($object->id))
+		if (is_object($object))
 		{
 			global $langs, $conf, $db, $hookmanager, $maxwidthmini, $maxheightmini;
 

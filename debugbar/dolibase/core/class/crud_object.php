@@ -15,7 +15,7 @@
  * 
  */
 
-require_once DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php";
+require_once DOL_DOCUMENT_ROOT . '/core/class/commonobject.class.php';
 
 /**
  * CrudObject class (Create/Read/Update/Delete)
@@ -35,6 +35,10 @@ class CrudObject extends CommonObject
 	 * @var array Fetch fields
 	 */
 	public $fetch_fields = array(); // e.: array('field_1', 'field_2', 'field_3')
+	/**
+	 * @var array Date fields
+	 */
+	public $date_fields = array(); // e.: array('creation_date')
 	/**
 	 * @var string Primary key name (id field)
 	 */
@@ -182,6 +186,11 @@ class CrudObject extends CommonObject
 					$this->id = $obj->{$this->pk_name};
 				}
 
+				// Fix error: dol_print_date function call with deprecated value of time
+				foreach ($this->date_fields as $field) {
+					$this->$field = $this->db->jdate($this->$field);
+				}
+
 				$this->db->free($resql);
 
 				return 1;
@@ -209,20 +218,29 @@ class CrudObject extends CommonObject
 	 * @param  string  $join         join clause
 	 * @param  string  $where        where clause (without 'WHERE')
 	 * @param  boolean $get_total    get total number of records or not
+	 * @param  boolean $table_alias  Alias to use for table name, leave it empty if you won't
 	 * @return int                   <0 if KO, >0 if OK
 	 */
-	public function fetchAll($limit = 0, $offset = 0, $sort_field = '', $sort_order = 'DESC', $more_fields = '', $join = '', $where = '', $get_total = false)
+	public function fetchAll($limit = 0, $offset = 0, $sort_field = '', $sort_order = 'DESC', $more_fields = '', $join = '', $where = '', $get_total = false, $table_alias = 't')
 	{
+		// Init lines
+		$this->lines = array();
+
+		if (empty($this->fetch_fields)) {
+			return 0;
+		}
+
 		// SELECT request
-		$sql = "SELECT ";
+		$sql = "SELECT DISTINCT ";
 		foreach ($this->fetch_fields as $field) {
-			$sql.= "t.`" . $field . "`,";
+			$sql.= (! empty($table_alias) ? $table_alias.'.' : '')."`" . $field . "`,";
 		}
 		$sql = substr($sql, 0, -1); // Remove the last ','
 		if (! empty($more_fields)) {
 			$sql.= $more_fields[0] == ',' ? $more_fields : ', ' . $more_fields;
 		}
-		$sql.= " FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
+		$sql.= " FROM " . MAIN_DB_PREFIX . $this->table_element;
+		if (! empty($table_alias)) $sql.= " as ".$table_alias;
 		if (! empty($join)) $sql.= $join;
 		if (! empty($where)) $sql.= " WHERE ".$where;
 		if (! empty($sort_field)) $sql.= $this->db->order($sort_field, $sort_order);
@@ -245,9 +263,6 @@ class CrudObject extends CommonObject
 				$sql.= $this->db->plimit($limit, $offset);
 			}
 		}
-
-		// Init lines
-		$this->lines = array();
 
 		dol_syslog(__METHOD__ . " sql=" . $sql, LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -295,6 +310,11 @@ class CrudObject extends CommonObject
 					// enssure that $this->id is filled because we use it in update/delete/getNomUrl functions
 					if ($set_id) {
 						$this->lines[$i]->id = $obj->{$this->pk_name};
+					}
+
+					// Fix error: dol_print_date function call with deprecated value of time
+					foreach ($this->date_fields as $field) {
+						$this->lines[$i]->$field = $this->db->jdate($this->lines[$i]->$field);
 					}
 
 					$i++;
@@ -427,6 +447,19 @@ class CrudObject extends CommonObject
 	}
 
 	/**
+	 * Update row(s) into database (wrapper for updateAll function)
+	 *
+	 * @param  array   $data      array, e.: array('my_field_name' => 'my_field_value', 'second_field_name' => 'second_field_value')
+	 * @param  string  $where     where clause (without 'WHERE')
+	 * @param  int     $notrigger 0=launch triggers after, 1=disable triggers
+	 * @return int                <0 if KO, >0 if OK
+	 */
+	public function updateWhere($data, $where, $notrigger = 1)
+	{
+		return $this->updateAll($data, $where, $notrigger);
+	}
+
+	/**
 	 * Update all object rows into database
 	 *
 	 * @param  array   $data      array, e.: array('my_field_name' => 'my_field_value', 'second_field_name' => 'second_field_value')
@@ -473,11 +506,6 @@ class CrudObject extends CommonObject
 			return -1 * $error;
 		} else {
 			$this->db->commit();
-
-			// apply changes to object
-			foreach ($data as $key => $value) {
-				$this->$key = $value;
-			}
 
 			return 1;
 		}
@@ -534,6 +562,18 @@ class CrudObject extends CommonObject
 	}
 
 	/**
+	 * Delete row(s) in database (wrapper for deleteAll function)
+	 *
+	 * @param  string  $where     where clause (without 'WHERE')
+	 * @param  int     $notrigger 0=launch triggers after, 1=disable triggers
+	 * @return int                <0 if KO, >0 if OK
+	 */
+	public function deleteWhere($where, $notrigger = 1)
+	{
+		return $this->deleteAll($where, $notrigger);
+	}
+
+	/**
 	 * Delete all object rows in database
 	 *
 	 * @param  string  $where     where clause (without 'WHERE')
@@ -562,7 +602,7 @@ class CrudObject extends CommonObject
 				$sql = "DELETE FROM " . MAIN_DB_PREFIX . $this->table_element;
 				$sql.= " WHERE ".$where;
 				// Fetch rows ids before deleting
-				$this->fetchAll(0, 0, '', 'DESC', '', '', $where);
+				$this->fetchAll(0, 0, '', 'DESC', '', '', $where, false, '');
 			}
 
 			dol_syslog(__METHOD__ . " sql=" . $sql);
@@ -604,9 +644,7 @@ class CrudObject extends CommonObject
 	/**
 	 * Delete all links between an object $this
 	 *
-	 * @param  string  $where     where clause (without 'WHERE')
-	 * @param  int     $notrigger 0=launch triggers after, 1=disable triggers
-	 * @return int                <0 if KO, >0 if OK
+	 * @return     int     <0 if KO, >0 if OK
 	 */
 	protected function deleteAllObjectLinked()
 	{

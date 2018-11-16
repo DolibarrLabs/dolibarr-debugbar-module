@@ -25,29 +25,13 @@ dolibase_include_once('/core/class/logs.php');
 class CustomObject extends CrudObject
 {
 	/**
-	 * @var string Id to identify managed object
-	 */
-	public $element = ''; // e.: 'my_object'
-	/**
-	 * @var string Name of table without prefix where object is stored
-	 */
-	public $table_element = ''; // e.: 'my_table'
-	/**
 	 * @var string Banner picture
 	 */
 	public $picto = ''; // e.: 'my_picture@my_module'
 	/**
-	 * @var array Fetch fields
+	 * @var array Tooltip details
 	 */
-	public $fetch_fields = array(); // e.: array('field_1', 'field_2', 'field_3')
-	/**
-	 * @var string Primary key name (id field)
-	 */
-	public $pk_name = 'rowid';
-	/**
-	 * @var string Ref. field name
-	 */
-	public $ref_field_name = 'ref';
+	public $tooltip_details = array(); // e.: array('detail_1' => 'value_1', 'detail_2' => 'value_2')
 	/**
 	 * @var string Document title
 	 */
@@ -70,7 +54,7 @@ class CustomObject extends CrudObject
 	{
 		parent::__construct();
 
-		$this->modulepart = get_rights_class(false, true);
+		$this->modulepart = get_modulepart();
 	}
 
 	/**
@@ -133,13 +117,13 @@ class CustomObject extends CrudObject
 	}
 
 	/**
-	 *  Returns the reference to the following non used object depending on the active numbering model
-	 *  defined into MODULE_RIGHTS_CLASS_ADDON
+	 * Returns the reference to the following non used object depending on the active numbering model
+	 * defined into MODULE_RIGHTS_CLASS_ADDON
 	 *
-	 *  @param  string      $const_name_prefix     Constant name prefix
-	 *  @param  string      $model_name            Numbering model name
-	 *  @param  Societe     $soc                   Object thirdparty
-	 *  @return string      Reference
+	 * @param  string      $const_name_prefix     Constant name prefix
+	 * @param  string      $model_name            Numbering model name
+	 * @param  Societe     $soc                   Object thirdparty
+	 * @return string      Reference
 	 */
 	public function getNextNumRef($const_name_prefix = '', $model_name = '', $soc = '')
 	{
@@ -149,24 +133,26 @@ class CustomObject extends CrudObject
 
 		if (! empty($conf->global->$const_name))
 		{
-			$mybool=false;
-
 			$file = $conf->global->$const_name;
 			$classname = 'NumModel'.ucfirst($file);
+			$exists = false;
 
 			// Include file with class
-			$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
-			foreach ($dirmodels as $reldir) {
-				$dir = dol_buildpath($reldir."/dolibase/core/num_models/");
-				$mod_dir = dol_buildpath($reldir."/".$dolibase_config['module']['folder']."/dolibase/core/num_models/");
-				
-				$dir = ! is_dir($dir) ? $mod_dir : $dir;
+			$dirmodels = array(
+				dolibase_buildpath("core/num_models/"),
+				dol_buildpath($dolibase_config['module']['folder']."/core/num_models/")
+			);
 
-				// Load file with numbering class (if found)
-				$mybool|=@include_once $dir.$file.".php";
+			foreach ($dirmodels as $dir)
+			{
+				if (is_dir($dir))
+				{
+					// Load file with numbering class (if found)
+					$exists|=@include_once $dir.$file.".php";
+				}
 			}
 
-			if (! $mybool)
+			if (! $exists)
 			{
 				dol_print_error('',"Failed to include file ".$file);
 				return '';
@@ -197,11 +183,11 @@ class CustomObject extends CrudObject
 	}
 
 	/**
-	 *	Return clicable name (with picto eventually)
+	 * Return clicable name (with picto eventually)
 	 *
-	 *	@param		int		$withpicto		0=No picto, 1=Include picto into link, 2=Only picto
-	 *	@param		string	$title			Tooltip title
-	 *	@return		string					Chain with URL
+	 * @param      int        $withpicto     0=No picto, 1=Include picto into link, 2=Only picto
+	 * @param      string     $title         Tooltip title
+	 * @return     string                    Chain with URL
 	 */
 	public function getNomUrl($withpicto = 0, $title = '')
 	{
@@ -213,6 +199,10 @@ class CustomObject extends CrudObject
 		$label  = (! empty($title) ? '<u>' . $langs->trans($title) . '</u><br>' : '');
 		if (! empty($this->$ref_field)) {
 			$label .= '<b>' . $langs->trans('Ref') . ':</b> ' . $this->$ref_field;
+		}
+		// Add tooltip details
+		foreach ($this->tooltip_details as $key => $value) {
+			$label .= '<br><b>' . $langs->trans($key) . ':</b> ' . $value;
 		}
 
 		$url = dol_buildpath((! empty($this->card_url) ? $this->card_url : '/'.$dolibase_config['module']['folder'].'/card.php') . '?id='.$this->id, 1);
@@ -229,10 +219,10 @@ class CustomObject extends CrudObject
 	}
 
 	/**
-	 *  Return label of status of object (draft, validated, ...)
+	 * Return label of status of object (draft, validated, ...)
 	 *
-	 *  @param      int         $mode        0=long label, 1=short label, 2=Picto + short label, 3=Picto, 4=Picto + long label, 5=Short label + Picto
-	 *  @return     string      Label
+	 * @param      int        $mode     0=long label, 1=short label, 2=Picto + short label, 3=Picto, 4=Picto + long label, 5=Short label + Picto
+	 * @return     string     Label
 	 */
 	public function getLibStatut($mode = 0)
 	{
@@ -277,10 +267,10 @@ class CustomObject extends CrudObject
 	}
 
 	/**
-	 *  Create a document onto disk according to template module.
+	 * Create a document onto disk according to template module.
 	 *
-	 *  @param	    string		$model			Force template to use ('' to not force)
-	 *  @return     int         				0 if KO, 1 if OK
+	 * @param      string     $model     Force template to use ('' to not force)
+	 * @return     int                   0 if KO, 1 if OK
 	 */
 	public function generateDocument($model)
 	{
@@ -324,8 +314,25 @@ class CustomObject extends CrudObject
 			}
 		}
 
+		// Get model path
 		$modelpath = $dolibase_config['main']['path'] . '/core/doc_models/';
+		$dirmodels = array(
+			$dolibase_config['main']['path'] . '/core/doc_models/' => dolibase_buildpath("core/doc_models/"),
+			$dolibase_config['module']['folder'] . '/core/doc_models/' => dol_buildpath($dolibase_config['module']['folder']."/core/doc_models/")
+		);
 
+		foreach ($dirmodels as $path => $dir)
+		{
+			foreach(array('doc', 'pdf') as $prefix)
+			{
+				if (file_exists($dir.$prefix."_".$model.".modules.php")) {
+					$modelpath = $path;
+					break 2;
+				}
+			}
+		}
+
+		// Generate document
 		$result = $this->commonGenerateDocument($modelpath, $model, $outputlangs, $hidedetails, $hidedesc, $hideref);
 		if ($result <= 0) {
 			setEventMessages($this->error, $this->errors, 'errors');
@@ -335,9 +342,9 @@ class CustomObject extends CrudObject
 	}
 
 	/**
-	 *  Delete document from disk.
+	 * Delete document from disk.
 	 *
-	 *  @return     int         				0 if KO, 1 if OK
+	 * @return     int     0 if KO, 1 if OK
 	 */
 	public function deleteDocument()
 	{
@@ -351,10 +358,12 @@ class CustomObject extends CrudObject
 			$upload_dir = $conf->{$this->modulepart}->dir_output;
 			$file = $upload_dir . '/' . GETPOST('file');
 			$result = dol_delete_file($file, 0, 0, 0, $object);
-			if ($result)
+			if ($result) {
 				setEventMessages($langs->trans("FileWasRemoved", GETPOST('file')), null, 'mesgs');
-			else
+			}
+			else {
 				setEventMessages($langs->trans("ErrorFailToDeleteFile", GETPOST('file')), null, 'errors');
+			}
 
 			return $result;
 		}

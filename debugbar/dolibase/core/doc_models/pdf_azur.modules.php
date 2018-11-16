@@ -16,9 +16,9 @@
  */
 
 dolibase_include_once('/core/class/doc_model.php');
-include_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
-include_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
-include_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
+include_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+include_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
+include_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 
 /**
  * pdf_azur class
@@ -51,9 +51,9 @@ class pdf_azur extends DocModel
 	protected $const_prefix;
 
 	/**
-	 *	Constructor
+	 * Constructor
 	 *
-	 *  @param		DoliDB		$db      Database handler
+	 * @param      DoliDB      $db      Database handler
 	 */
 	public function __construct($db)
 	{
@@ -80,7 +80,7 @@ class pdf_azur extends DocModel
 		$this->option_logo            = 1; // Show logo
 		$this->option_multilang       = 1; // Multi-language support
 		$this->option_freetext        = 1; // Support add of a personalised text
-		$this->modulepart             = get_rights_class(false, true);
+		$this->modulepart             = get_modulepart();
 		$this->const_prefix           = get_rights_class(true);
 		$watermark_const              = $this->const_prefix . '_DRAFT_WATERMARK';
 		$this->watermark_text         = $conf->global->$watermark_const;
@@ -96,15 +96,15 @@ class pdf_azur extends DocModel
 	}
 
 	/**
-	 *  Function to build pdf onto disk
+	 * Function to build pdf onto disk
 	 *
-	 *  @param		Object		$object				Object to generate
-	 *  @param		Translate	$outputlangs		Lang output object
-	 *  @param		string		$srctemplatepath	Full path of source filename for generator using a template file
-	 *  @param		int			$hidedetails		Do not show line details
-	 *  @param		int			$hidedesc			Do not show desc
-	 *  @param		int			$hideref			Do not show ref
-	 *  @return     int             			    1=OK, 0=KO
+	 * @param       Object      $object             Object to generate
+	 * @param       Translate   $outputlangs        Lang output object
+	 * @param       string      $srctemplatepath    Full path of source filename for generator using a template file
+	 * @param       int         $hidedetails        Do not show line details
+	 * @param       int         $hidedesc           Do not show desc
+	 * @param       int         $hideref            Do not show ref
+	 * @return      int                             1=OK, 0=KO
 	 */
 	public function write_file($object, $outputlangs, $srctemplatepath='', $hidedetails=0, $hidedesc=0, $hideref=0)
 	{
@@ -188,7 +188,7 @@ class pdf_azur extends DocModel
 				$pdf->SetSubject($outputlangs->transnoentities($object->doc_title));
 				$pdf->SetCreator("Dolibarr ".DOL_VERSION);
 				$pdf->SetAuthor($outputlangs->convToOutputCharset($user->getFullName($outputlangs)));
-				$pdf->SetKeyWords($outputlangs->convToOutputCharset($object->ref)." ".$outputlangs->transnoentities($subject)." ".$outputlangs->convToOutputCharset($object->thirdparty->name));
+				$pdf->SetKeyWords($outputlangs->convToOutputCharset($object->ref)." ".$outputlangs->transnoentities($object->doc_title)." ".$outputlangs->convToOutputCharset($object->thirdparty->name));
 				if (! empty($conf->global->MAIN_DISABLE_PDF_COMPRESSION)) $pdf->SetCompression(false);
 
 				$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
@@ -272,11 +272,11 @@ class pdf_azur extends DocModel
 
 				// Page foot
 				$this->_pagefoot($pdf,$object,$outputlangs);
-				if (method_exists($pdf,'AliasNbPages')) $pdf->AliasNbPages();
+				if (method_exists($pdf, 'AliasNbPages')) $pdf->AliasNbPages();
 
 				$pdf->Close();
 
-				$pdf->Output($file,'F');
+				$pdf->Output($file, 'F');
 
 				// Add pdfgeneration hook
 				$hookmanager->initHooks(array('pdfgeneration'));
@@ -298,22 +298,22 @@ class pdf_azur extends DocModel
 		}
 		else
 		{
-			$this->error=$langs->trans("ErrorConstantNotDefined", $this->const_prefix . "_OUTPUTDIR");
+			$this->error = $langs->trans("ErrorConstantNotDefined", $this->const_prefix . "_OUTPUTDIR");
 			return 0;
 		}
 	}
 
 	/**
-	 *  Function to write pdf content
+	 * Function to write pdf content
 	 *
-	 *  @param		TCPDF		$pdf				PDF object
-	 *  @param		Object		$object				Object to generate
-	 *  @param		Translate	$outputlangs		Lang output object
-	 *  @param		int			$default_font_size	Default font size
-	 *  @param		int			$tab_top			Table top position
-	 *  @param		int			$heightforinfotot	Info height
-	 *  @param		int			$heightforfreetext	Free text height
-	 *  @param		int			$heightforfooter	Footer height
+	 * @param       TCPDF       $pdf                PDF object
+	 * @param       Object      $object             Object to generate
+	 * @param       Translate   $outputlangs        Lang output object
+	 * @param       int         $default_font_size  Default font size
+	 * @param       int         $tab_top            Table top position
+	 * @param       int         $heightforinfotot   Info height
+	 * @param       int         $heightforfreetext  Free text height
+	 * @param       int         $heightforfooter    Footer height
 	 */
 	protected function write_content(&$pdf, $object, $outputlangs, $default_font_size, $tab_top, $heightforinfotot, $heightforfreetext, $heightforfooter)
 	{
@@ -342,16 +342,16 @@ class pdf_azur extends DocModel
 	}
 
 	/**
-	 *  Function to print table line
+	 * Function to print table line
 	 *
-	 *  @param		TCPDF		$pdf				PDF object
-	 *  @param		string		$name				Row name
-	 *  @param		string		$value				Row value
-	 *  @param		int			$curY				Current Y position
-	 *  @param		Translate	$outputlangs		Lang output object
-	 *  @param		int			$default_font_size	Default font size
-	 *  @param		int			$add_separator		Should add a row separator or not
-	 *  @return     int             				next Y position
+	 * @param       TCPDF       $pdf                PDF object
+	 * @param       string      $name               Row name
+	 * @param       string      $value              Row value
+	 * @param       int         $curY               Current Y position
+	 * @param       Translate   $outputlangs        Lang output object
+	 * @param       int         $default_font_size  Default font size
+	 * @param       int         $add_separator      Should add a row separator or not
+	 * @return      int                             next Y position
 	 */
 	protected function print_line(&$pdf, $name, $value, $curY, $outputlangs, $default_font_size, $add_separator=1)
 	{
@@ -393,19 +393,19 @@ class pdf_azur extends DocModel
 	}
 
 	/**
-	 *   Show table for lines
+	 * Show table for lines
 	 *
-	 *   @param		TCPDF		$pdf     		Object PDF
-	 *   @param		string		$tab_top		Top position of table
-	 *   @param		string		$tab_height		Height of table (rectangle)
-	 *   @param		int			$nexY			Y (not used)
-	 *   @param		Translate	$outputlangs	Langs object
-	 *   @param		int			$hidetop		1=Hide top bar of array and title, 0=Hide nothing, -1=Hide only title
-	 *   @param		int			$hidebottom		Hide bottom bar of array
-	 *   @param		string		$currency		Currency code
-	 *   @return	void
+	 * @param       TCPDF       $pdf            Object PDF
+	 * @param       string      $tab_top        Top position of table
+	 * @param       string      $tab_height     Height of table (rectangle)
+	 * @param       int         $nexY           Y (not used)
+	 * @param       Translate   $outputlangs    Langs object
+	 * @param       int         $hidetop        1=Hide top bar of array and title, 0=Hide nothing, -1=Hide only title
+	 * @param       int         $hidebottom     Hide bottom bar of array
+	 * @param       string      $currency       Currency code
+	 * @return      void
 	 */
-	public function _tableau(&$pdf, $tab_top, $tab_height, $nexY, $outputlangs, $hidetop=0, $hidebottom=0)
+	public function _tableau(&$pdf, $tab_top, $tab_height, $nexY, $outputlangs, $hidetop=0, $hidebottom=0, $currency='')
 	{
 		// Force to disable hidetop and hidebottom
 		$hidebottom = 0;
@@ -423,14 +423,14 @@ class pdf_azur extends DocModel
 	}
 
 	/**
-	 *  Show top header of page.
+	 * Show top header of page.
 	 *
-	 *  @param	TCPDF		$pdf     		Object PDF
-	 *  @param  Object		$object     	Object to show
-	 *  @param  int	    	$showaddress    0=no, 1=yes
-	 *  @param  Translate	$outputlangs	Object lang for output
-	 *  @param	string		$titlekey		Translation key to show as title of document
-	 *  @return	void
+	 * @param   TCPDF       $pdf            Object PDF
+	 * @param   Object      $object         Object to show
+	 * @param   int         $showaddress    0=no, 1=yes
+	 * @param   Translate   $outputlangs    Object lang for output
+	 * @param   string      $titlekey       Translation key to show as title of document
+	 * @return  void
 	 */
 	public function _pagehead(&$pdf, $object, $showaddress, $outputlangs, $titlekey='')
 	{
@@ -578,13 +578,13 @@ class pdf_azur extends DocModel
 	}
 
 	/**
-	 *  Show footer of page. Need this->emetteur object
+	 * Show footer of page. Need this->emetteur object
 	 *
-	 *  @param	TCPDF		$pdf     			PDF
-	 *  @param	Object		$object				Object to show
-	 *  @param	Translate	$outputlangs		Object lang for output
-	 *  @param	int			$hidefreetext		1=Hide free text
-	 *  @return	int								Return height of bottom margin including footer text
+	 * @param   TCPDF       $pdf                PDF
+	 * @param   Object      $object             Object to show
+	 * @param   Translate   $outputlangs        Object lang for output
+	 * @param   int         $hidefreetext       1=Hide free text
+	 * @return  int                             Return height of bottom margin including footer text
 	 */
 	public function _pagefoot(&$pdf, $object, $outputlangs, $hidefreetext=0)
 	{

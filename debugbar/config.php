@@ -47,21 +47,3 @@ $dolibase_config['other'] = array(
 	'menu_lang_file' => $dolibase_config['module']['folder'].'@'.$dolibase_config['module']['folder'], // e.: 'mylangfile@modulefolder'
 	'top_menu_name'  => str_replace('_', '', $dolibase_config['module']['folder']) // e.: 'mytopmenu' (no underscores)
 );
-
-/**
- * Load Dolibarr environment (mandatory)
- */
-
-if (! defined('__DIR__')) define('__DIR__', dirname(__FILE__)); // Define __DIR__ for PHP version < 5.3
-
-if (false === (@include_once __DIR__ . '/../main.inc.php')) { // From htdocs directory
-	@include_once __DIR__ . '/../../main.inc.php'; // From "custom" directory
-}
-
-/**
- * Load Dolibase
- */
-
-if (false === (@include DOL_DOCUMENT_ROOT.'/dolibase/autoload.php')) { // From htdocs directory
-	@include dol_buildpath('/'.$dolibase_config['module']['folder'].'/dolibase/autoload.php'); // From module directory
-}

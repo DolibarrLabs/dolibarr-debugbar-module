@@ -46,15 +46,17 @@ class CustomForm extends Form
 	/**
 	 * Return a checkbox
 	 *
-	 * @param   $name    checkbox name
-	 * @param   $value   checkbox value
-	 * @param   $id      checkbox id
-	 * @param   $class   checkbox class
-	 * @return  string   checkbox HTML
+	 * @param   $name     checkbox name
+	 * @param   $value    checkbox value
+	 * @param   $id       checkbox id
+	 * @param   $class    checkbox class
+	 * @param   $checked  checkbox is checked or not
+	 * @param   $disabled checkbox is disabled or not
+	 * @return  string    checkbox HTML
 	 */
-	public function checkBox($name, $value = '', $id = '', $class = '')
+	public function checkBox($name, $value = '', $id = '', $class = '', $checked = false, $disabled = false)
 	{
-		return '<input type="checkbox" class="flat'.(! empty($class) ? ' '.$class : '').'" name="'.$name.'" id="'.$id.'" value="'.$value.'">';
+		return '<input type="checkbox" class="flat'.(! empty($class) ? ' '.$class : '').'" name="'.$name.'" id="'.$id.'" value="'.$value.'"'.($checked ? ' checked' : '').($disabled ? ' disabled' : '').'>';
 	}
 
 	/**
@@ -75,11 +77,25 @@ class CustomForm extends Form
 	 *
 	 * @param   $name           text area name
 	 * @param   $value          text area value
+	 * @param   $style          text area style
+	 * @param   $rows           text area rows
+	 * @return  string          text area HTML
+	 */
+	public function textArea($name, $value, $style = 'margin-top: 5px; width: 90%', $rows = '3')
+	{
+		return '<textarea name="'.$name.'" class="flat" style="'.$style.'" rows="'.$rows.'">'.$value.'</textarea>';
+	}
+
+	/**
+	 * Return a text area with editor (if WYSIWYG editor module is activated)
+	 *
+	 * @param   $name           text area name
+	 * @param   $value          text area value
 	 * @param   $toolbarname    toolbar name
 	 * @param   $height         text area height
 	 * @return  string          text area HTML
 	 */
-	public function textArea($name, $value, $toolbarname = 'dolibarr_details', $height = 100)
+	public function textEditor($name, $value, $toolbarname = 'dolibarr_details', $height = 100)
 	{
 		global $conf;
 
@@ -88,7 +104,6 @@ class CustomForm extends Form
 		$doleditor = new DolEditor($name, $value, '', $height, $toolbarname, 'In', false, false, true, ROWS_3, '90%');
 
 		return $doleditor->Create(1);
-		//return '<textarea name="'.$name.'" wrap="soft" cols="70" fields="'.ROWS_3.'">'.$value.'</textarea>';
 	}
 
 	/**

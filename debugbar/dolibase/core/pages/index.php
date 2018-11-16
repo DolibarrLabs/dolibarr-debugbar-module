@@ -16,7 +16,7 @@
  */
 
 dolibase_include_once('/core/class/form_page.php');
-include_once DOL_DOCUMENT_ROOT.'/core/class/dolgraph.class.php';
+include_once DOL_DOCUMENT_ROOT . '/core/class/dolgraph.class.php';
 
 /**
  * IndexPage class
@@ -234,8 +234,8 @@ class IndexPage extends FormPage
 	/**
 	 * Add a statistics graph from predefined data
 	 *
-	 * @param     $data       		Data to show
-	 * @param     $legend       	Legend array
+	 * @param     $data             Data to show
+	 * @param     $legend           Legend array
 	 * @param     $graph_type       Type of graph ('pie', 'bars', 'lines')
 	 * @param     $graph_title      Graph title
 	 */

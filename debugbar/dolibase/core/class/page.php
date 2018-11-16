@@ -73,6 +73,13 @@ class Page
 	 * @var string Module part
 	 */
 	protected $modulepart;
+	/**
+	 * @var array Page assets
+	 */
+	protected $assets = array(
+		'css' => array(),
+		'js'  => array()
+	);
 
 
 	/**
@@ -92,7 +99,7 @@ class Page
 		$this->title             = $page_title;
 		$this->access_permission = $access_perm;
 		$this->rights_class      = get_rights_class();
-		$this->modulepart        = get_rights_class(false, true);
+		$this->modulepart        = get_modulepart();
 
 		// Load translations
 		$langs->load($dolibase_config['other']['lang_files'][0]);
@@ -145,6 +152,19 @@ class Page
 	}
 
 	/**
+	 * Load an array of language files
+	 *
+	 * @param     $lang_files_array   Language files array
+	 * @param     $from_module        Files should be loaded from module 'langs' directory or not
+	 */
+	public function loadLangs($lang_files_array, $from_module = false)
+	{
+		foreach ($lang_files_array as $lang_file) {
+			$this->loadLang($lang_file, $from_module);
+		}
+	}
+
+	/**
 	 * Append content to page head
 	 *
 	 * @param     $content     content to add
@@ -163,7 +183,9 @@ class Page
 	{
 		global $dolibase_config;
 
-		$this->appendToHead('<script type="text/javascript" src="'.dol_buildpath('/'.$dolibase_config['module']['folder'].'/js/'.$js_file, 1).'"></script>'."\n");
+		//$this->appendToHead('<script type="text/javascript" src="'.dol_buildpath($dolibase_config['module']['folder'].'/js/'.$js_file, 1).'"></script>'."\n");
+
+		$this->assets['js'][] = $dolibase_config['module']['folder'].'/js/'.$js_file;
 	}
 
 	/**
@@ -175,7 +197,9 @@ class Page
 	{
 		global $dolibase_config;
 
-		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dol_buildpath('/'.$dolibase_config['module']['folder'].'/css/'.$css_file, 1).'">'."\n");
+		//$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dol_buildpath($dolibase_config['module']['folder'].'/css/'.$css_file, 1).'">'."\n");
+
+		$this->assets['css'][] = $dolibase_config['module']['folder'].'/css/'.$css_file;
 	}
 
 	/**
@@ -317,9 +341,9 @@ class Page
 	 * Opens a new html table
 	 *
 	 * @param   $header_columns   table header columns, e.: array(
-	 *															array('name' => 'Column1', 'attr' => 'align="center"'),
-	 *															array('name' => 'Column2', 'attr' => 'align="center" width="20"')
-	 *														)
+	 *                                                          array('name' => 'Column1', 'attr' => 'align="center"'),
+	 *                                                          array('name' => 'Column2', 'attr' => 'align="center" width="20"')
+	 *                                                      )
 	 * @param   $attr             table attributes
 	 * @param   $print_fiche_head print Dolibarr fiche head
 	 * @param   $summary          table summary
@@ -347,7 +371,7 @@ class Page
 		{
 			echo '<tr class="liste_titre">'."\n";
 			foreach ($header_columns as $col) {
-				echo '<td'.(! empty($col['attr']) ? ' '.$col['attr'] : '').'>'.$langs->trans($col['name']).'</td>'."\n";
+				echo '<td'.(isset($col['attr']) && ! empty($col['attr']) ? ' '.$col['attr'] : '').'>'.$langs->trans($col['name']).'</td>'."\n";
 			}
 			echo '</tr>'."\n";
 		}
@@ -418,7 +442,9 @@ class Page
 	 */
 	public function addLineBreak($repeat = 0)
 	{
-		$repeat = $repeat < 0 ? 0 : $repeat;
+		if ($repeat < 0) {
+			$repeat = 0;
+		}
 
 		for ($i = 0; $i <= $repeat; $i++) {
 			echo "<br>\n";
@@ -446,7 +472,7 @@ class Page
 		start_time_measure('after_begin_call', __METHOD__, 'after_construct_call');
 
 		// Load Page Header (Dolibarr header, menus, ...)
-		llxHeader($this->head, $langs->trans($this->title));
+		llxHeader($this->head, $langs->trans($this->title), '', '', 0, 0, $this->assets['js'], $this->assets['css']);
 
 		// Generate page
 		$this->generate();

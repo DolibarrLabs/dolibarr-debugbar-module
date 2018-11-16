@@ -58,9 +58,9 @@ class NumModelSaphir extends NumModel
 	}
 
 	/**
-	 *  Return description of numbering model
+	 * Return description of numbering model
 	 *
-	 *  @return     string      Text with description
+	 * @return     string      Text with description
 	 */
 	public function info()
 	{
@@ -69,15 +69,13 @@ class NumModelSaphir extends NumModel
 		$langs->load($dolibase_config['other']['lang_files'][0]);
 
 		$module_name = $langs->transnoentities($dolibase_config['module']['name']);
-		$const_name  = $this->const_name;
-
 		$form = new Form($db);
 
 		$text = $langs->trans('GenericNumRefModelDesc')."<br>\n";
 		$text.= '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
 		$text.= '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 		$text.= '<input type="hidden" name="action" value="updateMask">';
-		$text.= '<input type="hidden" name="maskconst" value="'.$const_name.'">';
+		$text.= '<input type="hidden" name="maskconst" value="'.$this->const_name.'">';
 		$text.= '<table class="nobordernopadding" width="100%">';
 
 		$tooltip = $langs->trans("GenericMaskCodes", $module_name, $module_name);
@@ -87,7 +85,7 @@ class NumModelSaphir extends NumModel
 		$tooltip.= $langs->trans("GenericMaskCodes5");
 
 		$text.= '<tr><td>'.$langs->trans("Mask").':</td>';
-		$text.= '<td align="right">'.$form->textwithpicto('<input type="text" class="flat" size="24" name="mask" value="'.$conf->global->$const_name.'">',$tooltip,1,1).'</td>';
+		$text.= '<td align="right">'.$form->textwithpicto('<input type="text" class="flat" size="24" name="mask" value="'.$conf->global->{$this->const_name}.'">', $tooltip, 1, 1).'</td>';
 
 		$text.= '<td align="left" rowspan="2">&nbsp; <input type="submit" class="button" value="'.$langs->trans("Modify").'" name="Button"></td>';
 
@@ -100,39 +98,37 @@ class NumModelSaphir extends NumModel
 	}
 
 	/**
-	 *  Return an example of numbering
+	 * Return an example of numbering
 	 *
-	 *  @return string      Example
+	 * @return string      Example
 	 */
 	public function getExample()
 	{
 		global $langs;
 
-		$numExample = $this->getNextValue($this->table_name, $this->field_name);
+		$example = $this->getNextValue();
 
-		if (! $numExample)
+		if (! $example)
 		{
-			$numExample = $langs->trans('NotConfigured');
+			$example = $langs->trans('NotConfigured');
 		}
-		return $numExample;
+		return $example;
 	}
 
 	/**
-	 * 	Return next free value
+	 * Return next free value
 	 *
-	 *  @param	Societe		$objsoc     Object thirdparty
-	 *  @param  Object		$object		Object we need next value for
-	 *  @return string      			Value if KO, <0 if KO
+	 * @param  Societe      $objsoc     Object thirdparty
+	 * @return string                   Value if KO, <0 if KO
 	 */
-	public function getNextValue($objsoc = '', $object = '')
+	public function getNextValue($objsoc = null)
 	{
 		global $db, $conf, $langs;
 
-		require_once DOL_DOCUMENT_ROOT .'/core/lib/functions2.lib.php';
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 		// We get cursor rule
-		$const_name = $this->const_name;
-		$mask = $conf->global->$const_name;
+		$mask = $conf->global->{$this->const_name};
 
 		if (! $mask)
 		{
@@ -141,8 +137,8 @@ class NumModelSaphir extends NumModel
 		}
 
 		$date = time();
-		$numFinal = get_next_value($db, $mask, $this->table_name, $this->field_name, '', $objsoc, $date, 'next', false);
+		$next_value = get_next_value($db, $mask, $this->table_name, $this->field_name, '', $objsoc, $date, 'next', false);
 
-		return  $numFinal;
+		return $next_value;
 	}
 }

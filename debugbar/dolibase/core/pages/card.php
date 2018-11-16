@@ -17,6 +17,7 @@
 
 dolibase_include_once('/core/pages/create.php');
 dolibase_include_once('/core/lib/related_objects.php');
+dolibase_include_once('/core/lib/mailing.php');
 
 /**
  * CardPage class
@@ -48,6 +49,22 @@ class CardPage extends CreatePage
 	 * @var string Module sub permision
 	 */
 	protected $sub_permission = '';
+	/**
+	 * @var string Mail subject
+	 */
+	protected $mail_subject = 'MailSubject';
+	/**
+	 * @var string Mail template
+	 */
+	protected $mail_template = 'MailTemplate';
+	/**
+	 * @var array Mail substitutions
+	 */
+	protected $mail_substitutions = array();
+	/**
+	 * @var boolean Enable mail delivery receipt
+	 */
+	protected $enable_mail_delivery_receipt = false;
 
 
 	/**
@@ -87,9 +104,9 @@ class CardPage extends CreatePage
 		// Add JS files
 		$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/core/js/dropdown.js.php').'"></script>'."\n");
 		if ($enable_save_as) {
-			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/extra/jsPDF/jspdf.min.js').'"></script>'."\n");
-			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/extra/jsPDF/jspdf.plugin.autotable.min.js').'"></script>'."\n");
-			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/extra/table2csv/table2csv.js').'"></script>'."\n");
+			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/vendor/jsPDF/jspdf.min.js').'"></script>'."\n");
+			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/vendor/jsPDF/jspdf.plugin.autotable.min.js').'"></script>'."\n");
+			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/vendor/table2csv/table2csv.js').'"></script>'."\n");
 			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/core/js/save_as.js.php').'"></script>'."\n");
 		}
 		
@@ -114,6 +131,45 @@ class CardPage extends CreatePage
 	public function canDelete()
 	{
 		return empty($this->delete_permission) || verifCond($this->delete_permission);
+	}
+
+	/**
+	 * Set mail subject
+	 *
+	 * @param     $mail_subject     Mail subject string
+	 */
+	public function setMailSubject($mail_subject)
+	{
+		$this->mail_subject = $mail_subject;
+	}
+
+	/**
+	 * Set mail template
+	 *
+	 * @param     $mail_template     Mail template string
+	 */
+	public function setMailTemplate($mail_template)
+	{
+		$this->mail_template = $mail_template;
+	}
+
+	/**
+	 * Enables mail delivery receipt
+	 *
+	 */
+	public function enableMailDeliveryReceipt()
+	{
+		$this->enable_mail_delivery_receipt = true;
+	}
+
+	/**
+	 * Set mail substitutions
+	 *
+	 * @param     $mail_substitutions_array     Mail substitutions array
+	 */
+	public function setMailSubstitutions($mail_substitutions_array)
+	{
+		$this->mail_substitutions = $mail_substitutions_array;
 	}
 
 	/**
@@ -370,7 +426,7 @@ class CardPage extends CreatePage
 	 */
 	public function editTextAreaField($field_name, $text_area_name, $text_area_value = '', $toolbarname = 'dolibarr_details', $height = 100, $action_prefix = 'set_')
 	{
-		$field_content = $this->form->textArea($text_area_name, $text_area_value, $toolbarname, $height);
+		$field_content = $this->form->textEditor($text_area_name, $text_area_value, $toolbarname, $height);
 
 		$this->editField($field_name, $field_content, $action_prefix.$text_area_name);
 	}
@@ -451,11 +507,11 @@ class CardPage extends CreatePage
 	 * @param     $selected         selected checkbox input
 	 * @param     $action_prefix    action prefix
 	 */
-	public function editCheckListField($field_name, $radio_name, $radio_list, $selected = '', $action_prefix = 'set_')
+	public function editCheckListField($field_name, $check_name, $check_list, $selected = '', $action_prefix = 'set_')
 	{
-		$field_content = $this->form->checkList($radio_name, $radio_list, $selected, true);
+		$field_content = $this->form->checkList($check_name, $check_list, $selected, true);
 
-		$this->editField($field_name, $field_content, $action_prefix.$radio_name);
+		$this->editField($field_name, $field_content, $action_prefix.$check_name);
 	}
 
 	/**
@@ -481,7 +537,7 @@ class CardPage extends CreatePage
 	 */
 	protected function printRelatedObjects($object)
 	{
-		if (! empty($object) && isset($object->id))
+		if (is_object($object))
 		{
 			global $conf, $langs, $dolibase_config;
 
@@ -521,7 +577,7 @@ class CardPage extends CreatePage
 	 */
 	protected function printDocuments($object)
 	{
-		if (! empty($object) && isset($object->id))
+		if (is_object($object))
 		{
 			global $db, $conf, $user;
 			
@@ -556,14 +612,12 @@ class CardPage extends CreatePage
 	 * Print mail form
 	 *
 	 * @param     $object       Object
-	 * @param     $subject      Mail subject string
-	 * @param     $template     Mail template string
 	 */
-	protected function printMailForm($object, $subject = 'MailSubject', $template = 'MailTemplate')
+	protected function printMailForm($object)
 	{
-		if (! empty($object) && isset($object->id))
+		if (is_object($object))
 		{
-			global $db, $conf, $langs, $user;
+			global $langs, $user, $conf;
 
 			if (! $this->close_buttons_div) {
 				dol_fiche_end();
@@ -574,22 +628,7 @@ class CardPage extends CreatePage
 			echo load_fiche_titre($langs->trans('SendByMail'));
 			dol_fiche_head();
 
-			// Create mail form
-			include_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
-			$formmail = new FormMail($db);
-			$formmail->param['langsmodels'] = (empty($newlang)?$langs->defaultlang:$newlang);
-			$formmail->fromtype = (GETPOST('fromtype')?GETPOST('fromtype'):(!empty($conf->global->MAIN_MAIL_DEFAULT_FROMTYPE)?$conf->global->MAIN_MAIL_DEFAULT_FROMTYPE:'user'));
-			if($formmail->fromtype === 'user'){
-				$formmail->fromid = $user->id;
-				$formmail->frommail = $user->email; // fix for dolibarr 3.9
-			}
-			$formmail->trackid = $this->rights_class.$object->id;
-			if (! empty($conf->global->MAIN_EMAIL_ADD_TRACK_ID) && ($conf->global->MAIN_EMAIL_ADD_TRACK_ID & 2)) // If bit 2 is set
-			{
-				include_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
-				$formmail->frommail = dolAddEmailTrackId($formmail->frommail, $formmail->trackid);
-			}
-			$formmail->withfrom = 1;
+			// Get receivers
 			$receivers = array();
 			if ($object->fetch_thirdparty() > 0)
 			{
@@ -597,46 +636,23 @@ class CardPage extends CreatePage
 					$receivers[$key] = $value;
 				}
 			}
-			$formmail->withto              = GETPOST('sendto') ? GETPOST('sendto') : $receivers;
-			$formmail->withtocc            = $receivers;
-			$formmail->withtoccc           = $conf->global->MAIN_EMAIL_USECCC;
-			$formmail->withtopic           = $langs->trans($subject, '__REF__');
-			$formmail->withfile            = 2;
-			$formmail->withbody            = $langs->trans($template);
-			$formmail->withdeliveryreceipt = 1;
-			$formmail->withcancel          = 1;
-			// Substitutions Array
-			if (method_exists($formmail,"setSubstitFromObject")) { // fix for dolibarr 3.9
-				$formmail->setSubstitFromObject($object, $langs);
-				$formmail->substit['__CONTACTCIVNAME__'] = '';
-				$formmail->substit['__PERSONALIZED__']   = '';
-			}
-			else {
-				$formmail->substit['__CONTACTCIVNAME__'] = '';
-				$formmail->substit['__PERSONALIZED__']   = '';
-				$formmail->substit['__SIGNATURE__']      = $user->signature;
-			}
-			$formmail->substit['__REF__'] = $object->ref;
 
-			$custcontact = '';
-			$contactarr  = array();
-			$contactarr  = $object->liste_contact(-1, 'external');
+			// Set substitutions
+			$substitutions = array(
+				'__REF__'       => $object->ref,
+				'__SIGNATURE__' => $user->signature
+			);
 
-			if (is_array($contactarr) && count($contactarr) > 0)
-			{
-				foreach ($contactarr as $contact)
-				{
-					if ($contact['libelle'] == $langs->trans('TypeContact_external_CUSTOMER')) { // TODO Use code and not label
-						$contactstatic = new Contact($db);
-						$contactstatic->fetch($contact['id']);
-						$custcontact = $contactstatic->getFullName($langs, 1);
-					}
-				}
-
-				if (! empty($custcontact)) {
-					$formmail->substit['__CONTACTCIVNAME__'] = $custcontact;
-				}
+			// Add custom substitutions
+			foreach ($this->mail_substitutions as $key => $value) {
+				$substitutions[$key] = $value;
 			}
+
+			// Set additional parameters
+			$params = array(
+				'id'        => $object->id,
+				'returnurl' => $_SERVER["PHP_SELF"] . '?id=' . $object->id
+			);
 
 			// Get file/attachment
 			$ref = dol_sanitizeFileName($object->ref);
@@ -644,22 +660,11 @@ class CardPage extends CreatePage
 			$fileparams = dol_most_recent_file($conf->{$this->modulepart}->dir_output . '/' . $ref, preg_quote($ref, '/').'[^\-]+');
 			$file = $fileparams['fullname'];
 
-			// Array of additional parameters
-			$formmail->param['action']    = 'send';
-			$formmail->param['models']    = 'body';
-			$formmail->param['models_id'] = GETPOST('modelmailselected', 'int');
-			$formmail->param['id']        = $object->id;
-			$formmail->param['returnurl'] = $_SERVER["PHP_SELF"] . '?id=' . $object->id;
-			$formmail->param['fileinit']  = array($file);
-
-			// Init list of files
-			if (GETPOST('mode') == 'init') {
-				$formmail->clear_attached_files();
-				$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
-			}
-
 			// Show form
-			echo $formmail->get_form();
+			$trackid  = $this->rights_class.$object->id;
+			$subject  = $langs->trans($this->mail_subject, '__REF__');
+			$template = $langs->trans($this->mail_template);
+			echo get_mail_form($trackid, $subject, $template, $substitutions, array($file), $this->enable_mail_delivery_receipt, $receivers, $params);
 		}
 	}
 
@@ -680,11 +685,9 @@ class CardPage extends CreatePage
 	/**
 	 * Generate page end
 	 *
-	 * @param     $object            Object
-	 * @param     $mail_subject      Mail subject string
-	 * @param     $mail_template     Mail template string
+	 * @param     $object       Object
 	 */
-	public function end($object = '', $mail_subject = 'MailSubject', $mail_template = 'MailTemplate')
+	public function end($object = null)
 	{
 		if ($this->close_buttons_div) echo '</div>';
 
@@ -694,7 +697,7 @@ class CardPage extends CreatePage
 		if ($optioncss != 'print')
 		{
 			if ($action == 'presend') {
-				$this->printMailForm($object, $mail_subject, $mail_template);
+				$this->printMailForm($object);
 			}
 			else {
 				if ($this->show_documents) $this->printDocuments($object);

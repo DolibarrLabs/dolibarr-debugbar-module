@@ -15,17 +15,19 @@
  * 
  */
 
-/**
- * Note: This class is also affected by the issue in DolibaseModule class (@see module.php).
- */
+include_once DOL_DOCUMENT_ROOT . '/core/boxes/modules_boxes.php';
 
-include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
+if (! class_exists('Widget')) {
 
 /**
  * Widget class
+ *
+ * Known issue: This class is also affected by the same kind of issue as in DolibaseModule class (@see module.php).
+ *
+ * Fast solution:
+ *
+ * - Use Dolibase widget builder.
  */
-
-if (! class_exists('Widget')) {
 
 class Widget extends ModeleBoxes
 {
@@ -58,7 +60,7 @@ class Widget extends ModeleBoxes
 		global $dolibase_config, $langs;
 
 		// Check if config array is empty
-		if (empty($dolibase_config)) die('Dolibase::Widget::Error module configuration not found.');
+		if (empty($dolibase_config)) dolibase_error('Module configuration not found.', true);
 
 		// Load language files
 		$langs->load('boxes');
@@ -147,27 +149,27 @@ class Widget extends ModeleBoxes
 		$cols_count = count($this->info_box_contents[$current_line]);
 
 		$this->info_box_contents[$current_line][] = array(
-					// HTML properties of the TD element
-					'td'           => $attr,
-					// Fist line logo
-					//'logo'         => 'mypicture@mymodule',
-					// Main text
-					'text'         => $text,
-					// Secondary text
-					//'text2'        => '<p><strong>Another text</strong></p>',
-					// Unformatted text, usefull to load javascript elements
-					//'textnoformat' => '',
-					// Link on 'text' and 'logo' elements
-					//'url'          => 'http://example.com',
-					// Link's target HTML property
-					//'target'       => '_blank',
-					// Truncates 'text' element to the specified character length, 0 = disabled
-					'maxlength'    => $max_length,
-					// Prevents HTML cleaning (and truncation)
-					'asis'         => ! $clean_text, // abbr.: asis = as it is
-					// Same for 'text2'
-					//'asis2'        => true
-				);
+			// HTML properties of the TD element
+			'td'           => $attr,
+			// Fist line logo
+			//'logo'         => 'mypicture@mymodule',
+			// Main text
+			'text'         => $text,
+			// Secondary text
+			//'text2'        => '<p><strong>Another text</strong></p>',
+			// Unformatted text, usefull to load javascript elements
+			//'textnoformat' => '',
+			// Link on 'text' and 'logo' elements
+			//'url'          => 'http://example.com',
+			// Link's target HTML property
+			//'target'       => '_blank',
+			// Truncates 'text' element to the specified character length, 0 = disabled
+			'maxlength'    => $max_length,
+			// Prevents HTML cleaning (and truncation)
+			'asis'         => ! $clean_text, // abbr.: asis = as it is
+			// Same for 'text2'
+			//'asis2'        => true
+		);
 
 		if ($cols_count == 0 && ! empty($first_col_attr)) {
 			//  HTML properties of the TR element. Only available on the first column.
@@ -189,9 +191,10 @@ class Widget extends ModeleBoxes
 	/**
 	 * Method to show box. Called by Dolibarr eatch time it wants to display the box.
 	 *
-	 * @param array $head Array with properties of box title
-	 * @param array $contents Array with properties of box lines
-	 * @return void
+	 * @param   array   $head       Array with properties of box title
+	 * @param   array   $contents   Array with properties of box lines
+	 * @param   int     $nooutput   No print, only return string
+	 * @return  void
 	 */
 	public function showBox($head = null, $contents = null, $nooutput = 0)
 	{

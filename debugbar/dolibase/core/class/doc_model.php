@@ -15,8 +15,8 @@
  * 
  */
 
-include_once DOL_DOCUMENT_ROOT.'/core/class/commondocgenerator.class.php';
-include_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
+include_once DOL_DOCUMENT_ROOT . '/core/class/commondocgenerator.class.php';
+include_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 /**
  * DocModel class
@@ -27,12 +27,12 @@ abstract class DocModel extends CommonDocGenerator
 	public $error = '';
 
 	/**
-	 *  Return list of active generation models
+	 * Return list of active generation models
 	 *
-	 *  @param	DoliDB	$db     			Database handler
-	 *  @param  integer	$maxfilenamelength  Max length of value to show
-	 *  @param	string	$type     			Model(s) type
-	 *  @return	array						List of templates
+	 * @param   DoliDB      $db                     Database handler
+	 * @param   integer     $maxfilenamelength      Max length of value to show
+	 * @param   string      $type                   Model(s) type
+	 * @return  array                               List of templates
 	 */
 	public static function getModelsList($db, $maxfilenamelength=0, $type = '')
 	{

@@ -122,7 +122,8 @@ class ExtraFieldsPage extends FormPage
 
 		// List of supported format
 		$tmptype2label = ExtraFields::$type2label;
-		$type2label    = array('');
+		$type2label    = array();
+		$type2label[]  = ''; // adds an empty option
 		foreach ($tmptype2label as $key => $val) {
 			$type2label[$key] = $langs->transnoentitiesnoconv($val);
 		}
