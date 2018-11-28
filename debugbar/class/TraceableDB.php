@@ -26,6 +26,18 @@ class TraceableDB extends DoliDB
 	 * @var int Request start memory
 	 */
 	protected $startMemory;
+	/**
+	 * @var Database type
+	 */
+	public $type;
+	/**
+	 * @const Database label
+	 */
+	const LABEL = ''; // TODO: the right value should be $this->db::LABEL (but this is a constant? o_O)
+	/**
+	 * @const Version min database
+	 */
+	const VERSIONMIN = ''; // TODO: the same thing here, $this->db::VERSIONMIN is the right value
 
 	/**
 	 * Constructor
@@ -35,6 +47,7 @@ class TraceableDB extends DoliDB
 	public function __construct($db)
 	{
 		$this->db      = $db;
+		$this->type    = $db->type;
 		$this->queries = array();
 	}
 
