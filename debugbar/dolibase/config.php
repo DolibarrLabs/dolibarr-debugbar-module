@@ -22,11 +22,11 @@ global $dolibase_config;
  */
 
 $dolibase_config['main'] = array(
-	'version'             => '2.6.4', // possible values: a.b.c-alpha, a.b.c-beta, a.b.c-rcX or a.b.c
+	'version'             => '2.7.0', // possible values: a.b.c-alpha, a.b.c-beta, a.b.c-rcX or a.b.c
 	'link'                => 'https://github.com/AXeL-dev/dolibase',
 	'path'                => get_dolibase_path(),
 	'tables'              => array('logs'),
-	'use_ajax_on_confirm' => 1 // value should be 1/0 instead of true/false
+	'use_ajax_on_confirm' => true
 );
 
 /**

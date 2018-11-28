@@ -204,6 +204,7 @@ class Page
 
 	/**
 	 * Add a tab to the page
+	 * Note: this function should be called before $page->begin() function, otherwise it will not work as expected.
 	 *
 	 * @param     $title         tab title
 	 * @param     $url           tab url
@@ -324,6 +325,7 @@ class Page
 	/**
 	 * Close an opened form
 	 *
+	 * @return  $this
 	 */
 	public function closeForm()
 	{
@@ -334,7 +336,7 @@ class Page
 			$this->close_form = false;
 		}
 
-		return $this; // allow chaining this function with another (need PHP >= 5)
+		return $this;
 	}
 
 	/**
@@ -383,6 +385,7 @@ class Page
 	 * Close an opened html table
 	 *
 	 * @param   $print_fiche_end   print Dolibarr fiche end
+	 * @return  $this
 	 */
 	public function closeTable($print_fiche_end = false)
 	{
@@ -399,7 +402,7 @@ class Page
 			$this->close_table = false;
 		}
 
-		return $this; // allow chaining this function with another (need PHP >= 5)
+		return $this;
 	}
 
 	/**
@@ -452,6 +455,61 @@ class Page
 	}
 
 	/**
+	 * Return template absolute path
+	 *
+	 * @param   $template      template relative path or name
+	 * @return  string         template absolute path
+	 */
+	protected function getTemplatePath($template)
+	{
+		global $dolibase_config;
+
+		$path = preg_replace('/^\//', '', $template); // Clean the path
+
+		return dol_buildpath($dolibase_config['module']['folder'].'/tpl/'.$path);
+	}
+
+	/**
+	 * Include a template into the page.
+	 * Note: the template should be inside module tpl folder when $path_is_absolute parameter equal false.
+	 *
+	 * @param   $template_path      template path
+	 * @param   $path_is_absolute   define whether the template path is absolute or not
+	 * @param   $use_require_once   permit to avoid including the template many times on the same page
+	 * @param   $template_params    template parameters
+	 */
+	public function showTemplate($template_path, $path_is_absolute = false, $use_require_once = false, $template_params = array())
+	{
+		// Stop measuring time after begin call & Start measuring time after showTemplate call
+		start_time_measure('after_showTemplate_call', __METHOD__, 'after_begin_call');
+
+		$path = $path_is_absolute ? $template_path : $this->getTemplatePath($template_path);
+
+		foreach ($template_params as $param => $value) {
+			${$param} = $value;
+		}
+
+		if ($use_require_once) {
+			require_once $path;
+		} else {
+			require $path;
+		}
+
+		stop_time_measure('after_showTemplate_call');
+	}
+
+	/**
+	 * Show page_under_construction template (only once)
+	 *
+	 */
+	public function isUnderConstruction()
+	{
+		$template_path = dolibase_buildpath('/core/tpl/page_under_construction.php');
+
+		$this->showTemplate($template_path, true, true);
+	}
+
+	/**
 	 * Load default actions
 	 *
 	 */
@@ -461,7 +519,7 @@ class Page
 	}
 
 	/**
-	 * Generate page begining
+	 * Generate page beginning
 	 *
 	 */
 	public function begin()

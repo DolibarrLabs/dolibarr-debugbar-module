@@ -15,7 +15,7 @@
  * 
  */
 
-include_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 
 if (! class_exists('DolibaseModule')) {
 
@@ -23,7 +23,7 @@ if (! class_exists('DolibaseModule')) {
  * DolibaseModule class
  *
  * Known issue: When Dolibase is installed globally, DolibaseModule class will be loaded/included only once
- * on "dolibarr/admin/modules.php" file, & when it is installed internally (in each module) then the class
+ * on "dolibarr/admin/modules.php" file, but when it's installed internally (in each module) then the class
  * will be included from the first loaded module & in the rest of modules the inclusion will be stopped by
  * the if condition above, otherwise you will get this error: DolibaseModule class already exists.
  *
@@ -72,7 +72,7 @@ class DolibaseModule extends DolibarrModules
 		$this->config = $dolibase_config;
 
 		// Load lang files
-		$langs->load("module@".$this->config['main']['path']);
+		$langs->load("module@".$this->config['langs']['path']);
 
 		// Module configuration
 		$this->db              = $db;
@@ -133,6 +133,11 @@ class DolibaseModule extends DolibarrModules
 
 		// Cron Jobs
 		$this->cronjobs = array();
+
+		// Enable triggers
+		if (isset($this->config['module']['enable_triggers']) && $this->config['module']['enable_triggers']) {
+			$this->module_parts['triggers'] = 1;
+		}
 
 		// Load module settings
 		$this->loadSettings();
