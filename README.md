@@ -31,4 +31,28 @@ $debugbar["messages"]->addMessage("hello world!");
 ?>
 ```
 
+To save/stack data on page redirect:
+
+```PHP
+<?php
+
+// Require Dolibarr main file
+require '../main.inc.php';
+
+global $debugbar;
+
+// Do something
+// ...
+
+// Stack debugbar data (just before redirecting)
+$debugbar->stackData();
+
+// Redirect
+header('Location: page.php');
+
+?>
+```
+
+**Note**: You can even create your own redirect function to avoid rewriting the same lines of code every time.
+
 Learn more about DebugBar in the [docs](http://phpdebugbar.com/docs).
