@@ -2,7 +2,7 @@
 
 A Debug Bar module for Dolibarr ERP/CRM based on [phpdebugbar](https://github.com/maximebf/php-debugbar).
 
-![Screenshot](screenshots/Capture%20d'%C3%A9cran%202018-08-27%2015%3A19%3A17.png)
+![Screenshot](https://www.dolistore.com/4084-thickbox_default/Debug-bar.jpg)
 
 ## Installation
 
