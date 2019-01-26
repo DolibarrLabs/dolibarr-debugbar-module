@@ -2,13 +2,19 @@
 #
 # Copyright (C) 2018 AXeL
 
-#
-# Generic
-#
 Settings = die Einstellungen
+Changelog = Änderungsprotokoll
 About = Über
 DevelopedBy = Entwickelt von
 DolibaseVersion = Dieses Modul verwendet die Dolibase-Version
 ForAnyQuestions = Für Fragen oder Feedback senden Sie bitte eine E-Mail an
 FindMyModules = Finde meine anderen Module auf
 Dolistore = Dolistore
+ReportBug = Einen Fehler melden
+TechnicalInformations = Technische informationen
+DolibarrVersion = Dolibarr version
+ModuleVersion = Modulversion
+PHPVersion = PHP version
+DatabaseVersion = Datenbankversion
+WebServerVersion = Web server version
+ReportBugNote = Hinweis: Bitte geben Sie diese Informationen in Ihrer E-Mail (mit einigen Screenshots) an, wenn Sie auf einen Fehler stoßen.

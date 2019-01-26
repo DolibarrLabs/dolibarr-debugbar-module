@@ -2,13 +2,19 @@
 #
 # Copyright (C) 2018 AXeL
 
-#
-# Generic
-#
 Settings = إعدادات
+Changelog = سجل التغييرات
 About = معلومات
 DevelopedBy = طور من طرف
 DolibaseVersion = هذه الوحدة تستخدم إصدار Dolibase
 ForAnyQuestions = لأية أسئلة أو تعليقات ، يرجى إرسال بريد إلكتروني إلى
 FindMyModules = يمكنك إيجاد وحداتي الأخرى على
 Dolistore = Dolistore
+ReportBug = الإبلاغ عن خطأ
+TechnicalInformations = المعلومات الفنية
+DolibarrVersion = نسخة Dolibarr
+ModuleVersion = إصدار الوحدة
+PHPVersion = إصدار PHP
+DatabaseVersion = إصدار قاعدة البيانات
+WebServerVersion = نسخة خادم الويب
+ReportBugNote = ملاحظة: المرجو تقديم هذه المعلومات ضمن بريدك (مع بعض لقطات الشاشة) عند مصادفتك لخطأ.

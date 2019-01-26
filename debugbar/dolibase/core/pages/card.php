@@ -15,9 +15,9 @@
  * 
  */
 
-dolibase_include_once('/core/pages/create.php');
-dolibase_include_once('/core/lib/related_objects.php');
-dolibase_include_once('/core/lib/mailing.php');
+dolibase_include_once('core/pages/create.php');
+dolibase_include_once('core/lib/related_objects.php');
+dolibase_include_once('core/lib/mailing.php');
 
 /**
  * CardPage class
@@ -91,25 +91,25 @@ class CardPage extends CreatePage
 		$this->sub_permission    = $sub_permission;
 
 		// Load lang files
-		$langs->load("card_page@".$dolibase_config['langs']['path']);
+		$langs->load('card_page@'.$dolibase_config['main']['path']);
 
 		// Add CSS files
 		$optioncss = GETPOST('optioncss', 'alpha');
 		if ($optioncss == 'print') {
-			$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('/core/css/print.css.php').'">'."\n");
+			$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('core/css/print.css.php').'">'."\n");
 		}
-		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('/core/css/banner.css.php').'">'."\n");
-		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('/core/css/dropdown.css.php').'">'."\n");
+		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('core/css/banner.css.php').'">'."\n");
+		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('core/css/dropdown.css.php').'">'."\n");
 
 		// Add JS files
-		$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/core/js/dropdown.js.php').'"></script>'."\n");
+		$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('core/js/dropdown.js.php').'"></script>'."\n");
 		if ($enable_save_as) {
-			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/vendor/jsPDF/jspdf.min.js').'"></script>'."\n");
-			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/vendor/jsPDF/jspdf.plugin.autotable.min.js').'"></script>'."\n");
-			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/vendor/table2csv/table2csv.js').'"></script>'."\n");
-			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('/core/js/save_as.js.php').'"></script>'."\n");
+			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('vendor/jsPDF/jspdf.min.js').'"></script>'."\n");
+			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('vendor/jsPDF/jspdf.plugin.autotable.min.js').'"></script>'."\n");
+			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('vendor/table2csv/table2csv.js').'"></script>'."\n");
+			$this->appendToHead('<script type="text/javascript" src="'.dolibase_buildurl('core/js/save_as.js.php').'"></script>'."\n");
 		}
-		
+
 		parent::__construct($page_title, $access_perm);
 	}
 
@@ -137,39 +137,77 @@ class CardPage extends CreatePage
 	 * Set mail subject
 	 *
 	 * @param     $mail_subject     Mail subject string
+	 * @return    $this
 	 */
 	public function setMailSubject($mail_subject)
 	{
 		$this->mail_subject = $mail_subject;
+
+		return $this;
 	}
 
 	/**
 	 * Set mail template
 	 *
 	 * @param     $mail_template     Mail template string
+	 * @return    $this
 	 */
 	public function setMailTemplate($mail_template)
 	{
 		$this->mail_template = $mail_template;
+
+		return $this;
 	}
 
 	/**
 	 * Enables mail delivery receipt
 	 *
+	 * @return    $this
 	 */
 	public function enableMailDeliveryReceipt()
 	{
 		$this->enable_mail_delivery_receipt = true;
+
+		return $this;
 	}
 
 	/**
 	 * Set mail substitutions
 	 *
 	 * @param     $mail_substitutions_array     Mail substitutions array
+	 * @return    $this
 	 */
 	public function setMailSubstitutions($mail_substitutions_array)
 	{
 		$this->mail_substitutions = $mail_substitutions_array;
+
+		return $this;
+	}
+
+	/**
+	 * Open buttons div (if not already opened)
+	 *
+	 */
+	protected function openButtonsDiv()
+	{
+		if (! $this->close_buttons_div) {
+			dol_fiche_end();
+			echo '<div class="tabsAction">';
+			$this->close_buttons_div = true;
+			$this->add_fiche_end = false;
+		}
+	}
+
+	/**
+	 * Close buttons div (if opened)
+	 *
+	 */
+	protected function closeButtonsDiv()
+	{
+		if ($this->close_buttons_div) {
+			echo '</div>';
+			$this->close_buttons_div = false;
+		}
 	}
 
 	/**
@@ -180,24 +218,54 @@ class CardPage extends CreatePage
 	 * @param     $target               button target
 	 * @param     $class                button class
 	 * @param     $close_parent_div     should close parent div or not
+	 * @return    $this
 	 */
 	public function addButton($name, $href = '#', $target = '_self', $class = 'butAction', $close_parent_div = false)
 	{
 		global $langs;
 
-		if (! $this->close_buttons_div) {
-			dol_fiche_end();
-			echo '<div class="tabsAction">';
-			$this->close_buttons_div = true;
-			$this->add_fiche_end = false;
-		}
+		$this->openButtonsDiv();
 
 		echo '<a class="'.$class.'" href="'.$href.'" target="'.$target.'">'.$langs->trans($name).'</a>';
 
 		if ($close_parent_div) {
-			echo '</div>';
-			$this->close_buttons_div = false;
+			$this->closeButtonsDiv();
 		}
+
+		return $this;
+	}
+
+	/**
+	 * Add a confirmation button to the page
+	 *
+	 * @param     $name                 button name
+	 * @param     $id                   button id (used to display the confirmation dialog)
+	 * @param     $href                 button href
+	 * @param     $target               button target
+	 * @param     $class                button class
+	 * @param     $close_parent_div     should close parent div or not
+	 * @return    $this
+	 */
+	public function addConfirmButton($name, $id, $href = '#', $target = '_self', $class = 'butAction', $close_parent_div = false)
+	{
+		if (js_enabled())
+		{
+			global $langs;
+
+			$this->openButtonsDiv();
+
+			echo '<span class="'.$class.'" id="'.$id.'">'.$langs->trans($name).'</span>';
+
+			if ($close_parent_div) {
+				$this->closeButtonsDiv();
+			}
+		}
+		else
+		{
+			$this->addButton($name, $href, $target, $class, $close_parent_div);
+		}
+
+		return $this;
 	}
 
 	/**
@@ -207,19 +275,16 @@ class CardPage extends CreatePage
 	 * @param     $buttons              buttons list
 	 * @param     $class                button class
 	 * @param     $close_parent_div     should close parent div or not
+	 * @return    $this
 	 */
 	public function addListButton($name, $buttons = array(), $class = 'butAction', $close_parent_div = false)
 	{
 		global $langs;
 
-		if (! $this->close_buttons_div) {
-			dol_fiche_end();
-			echo '<div class="tabsAction">';
-			$this->close_buttons_div = true;
-		}
+		$this->openButtonsDiv();
 
 		echo '<div class="dropdown-click">';
-		echo '<label class="drop-btn button '.$class.'">'.$langs->trans($name).'&nbsp;&nbsp;<img class="align-middle" title="" alt="" src="'.dolibase_buildurl('/core/img/arrow-down.png').'" /></label>';
+		echo '<label class="drop-btn button '.$class.'">'.$langs->trans($name).'&nbsp;&nbsp;<img class="align-middle" title="" alt="" src="'.dolibase_buildurl('core/img/arrow-down.png').'" /></label>';
 		echo '<div class="dropdown-content dropdown-bottom">';
 
 		// buttons list
@@ -243,34 +308,39 @@ class CardPage extends CreatePage
 		echo '</div></div>';
 
 		if ($close_parent_div) {
-			echo '</div>';
-			$this->close_buttons_div = false;
+			$this->closeButtonsDiv();
 		}
+
+		return $this;
 	}
 
 	/**
 	 * Add save as button to the page
 	 *
 	 * @param     $close_parent_div     should close parent div or not
+	 * @return    $this
 	 */
 	public function addSaveAsButton($close_parent_div = false)
 	{
 		$buttons = array(
-			array('name' => 'CSV', 'picto' => dolibase_buildurl('/core/img/csv.png'), 'id' => 'save_as_csv', 'style' => 'text-align: center;'),
-			array('name' => 'PDF', 'picto' => dolibase_buildurl('/core/img/pdf.png'), 'id' => 'save_as_pdf', 'style' => 'text-align: center;')
+			array('name' => 'CSV', 'picto' => dolibase_buildurl('core/img/csv.png'), 'id' => 'save_as_csv', 'style' => 'text-align: center;'),
+			array('name' => 'PDF', 'picto' => dolibase_buildurl('core/img/pdf.png'), 'id' => 'save_as_pdf', 'style' => 'text-align: center;')
 		);
 
 		$this->addListButton('SaveAs', $buttons, 'butAction', $close_parent_div);
+
+		return $this;
 	}
 
 	/**
-	 * show a table field
+	 * Show a table field
 	 *
 	 * @param     $field_name     field name
 	 * @param     $field_content  field content
 	 * @param     $is_editable    is field editable or not
 	 * @param     $edit_link      edition link
 	 * @param     $attr           HTML attributes
+	 * @return    $this
 	 */
 	public function showField($field_name, $field_content, $is_editable = false, $edit_link = '', $attr = '')
 	{
@@ -285,29 +355,35 @@ class CardPage extends CreatePage
 		echo '</tr></table></td>';
 		echo '<td colspan="5">' . $field_content . '</td>';
 		echo '</tr>';
+
+		return $this;
 	}
 
 	/**
-	 * show reference/Ref. field
+	 * Show reference/Ref. field
 	 *
 	 * @param     $field_name     field name
 	 * @param     $object         object
 	 * @param     $list_link      link to list
+	 * @return    $this
 	 */
 	public function showRefField($field_name, $object, $list_link = '')
 	{
 		global $langs;
 
-		$morehtml = (empty($list_link) ? '' : '<a href="'.dol_buildpath($list_link, 1).'">'.$langs->trans("BackToList").'</a>');
+		$morehtml = (empty($list_link) ? '' : '<a href="'.dol_buildpath($list_link, 1).'">'.$langs->trans('BackToList').'</a>');
 		$field_content = $this->form->showrefnav($object, $object->ref_field_name, $morehtml, 1, $object->ref_field_name, $object->ref_field_name);
 
 		$this->showField($field_name, $field_content);
+
+		return $this;
 	}
 
 	/**
-	 * show extra fields
+	 * Show extra fields
 	 *
 	 * @param      $object     Object
+	 * @return     $this
 	 */
 	public function showExtraFields($object)
 	{
@@ -325,12 +401,15 @@ class CardPage extends CreatePage
 		}
 
 		include_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';
+
+		return $this;
 	}
 
 	/**
-	 * update extra fields
+	 * Update extra fields
 	 *
 	 * @param      $object     Object
+	 * @return     int         >0 if KO, 0 if OK
 	 */
 	public function updateExtraFields($object)
 	{
@@ -355,21 +434,24 @@ class CardPage extends CreatePage
 	}
 
 	/**
-	 * show banner
+	 * Show banner
 	 *
 	 * @param     $object         object
 	 * @param     $list_link      link to list
 	 * @param     $morehtmlleft   more html in the left
+	 * @return    $this
 	 */
 	public function showBanner($object, $list_link = '', $morehtmlleft = '')
 	{
 		global $langs;
 
-		$morehtml = (empty($list_link) ? '' : '<a href="'.dol_buildpath($list_link, 1).'">'.$langs->trans("BackToList").'</a>');
+		$morehtml = (empty($list_link) ? '' : '<a href="'.dol_buildpath($list_link, 1).'">'.$langs->trans('BackToList').'</a>');
 
 		dol_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', '', 0, $morehtmlleft);
 
 		echo '<div class="underbanner clearboth"></div>';
+
+		return $this;
 	}
 
 	/**
@@ -378,6 +460,7 @@ class CardPage extends CreatePage
 	 * @param     $field_name     field name
 	 * @param     $field_content  field content
 	 * @param     $action_name    action name
+	 * @return    $this
 	 */
 	public function editField($field_name, $field_content, $action_name)
 	{
@@ -396,26 +479,31 @@ class CardPage extends CreatePage
 		echo '</form>';
 		echo '</td>';
 		echo '</tr>';
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a text input
+	 * Add a table field with a text input
 	 *
 	 * @param     $field_name        field name
 	 * @param     $input_name        input name
 	 * @param     $input_value       input value
 	 * @param     $input_size        input size
 	 * @param     $action_prefix     action prefix
+	 * @return    $this
 	 */
 	public function editTextField($field_name, $input_name, $input_value = '', $input_size = 20, $action_prefix = 'set_')
 	{
 		$field_content = $this->form->textInput($input_name, $input_value, $input_size);
 
 		$this->editField($field_name, $field_content, $action_prefix.$input_name);
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a text area
+	 * Add a table field with a text area
 	 *
 	 * @param     $field_name            field name
 	 * @param     $text_area_name        text area name
@@ -423,16 +511,19 @@ class CardPage extends CreatePage
 	 * @param     $toolbarname           Editor toolbar name, values: 'Full', dolibarr_details', 'dolibarr_notes', 'dolibarr_mailings', 'dolibarr_readonly'
 	 * @param     $height                text area height
 	 * @param     $action_prefix         action prefix
+	 * @return    $this
 	 */
 	public function editTextAreaField($field_name, $text_area_name, $text_area_value = '', $toolbarname = 'dolibarr_details', $height = 100, $action_prefix = 'set_')
 	{
 		$field_content = $this->form->textEditor($text_area_name, $text_area_value, $toolbarname, $height);
 
 		$this->editField($field_name, $field_content, $action_prefix.$text_area_name);
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a number input
+	 * Add a table field with a number input
 	 *
 	 * @param     $field_name        field name
 	 * @param     $input_name        input name
@@ -440,6 +531,7 @@ class CardPage extends CreatePage
 	 * @param     $min               input minimum number
 	 * @param     $max               input maximum number
 	 * @param     $action_prefix     action prefix
+	 * @return    $this
 	 */
 	public function editNumberField($field_name, $input_name, $input_value = '', $min = 0, $max = 100, $action_prefix = 'set_')
 	{
@@ -448,25 +540,30 @@ class CardPage extends CreatePage
 		$field_content = $this->form->numberInput($input_name, $input_value, $min, $max);
 
 		$this->editField($field_name, $field_content, $action_prefix.$input_name);
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a date picker
+	 * Add a table field with a date picker
 	 *
 	 * @param     $field_name        field name
 	 * @param     $input_name        input name
 	 * @param     $input_value       input value
 	 * @param     $action_prefix     action prefix
+	 * @return    $this
 	 */
 	public function editDateField($field_name, $input_name, $input_value = '', $action_prefix = 'set_date_')
 	{
 		$field_content = $this->form->dateInput($input_name, $input_value);
 
 		$this->editField($field_name, $field_content, $action_prefix.$input_name);
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a list
+	 * Add a table field with a list
 	 *
 	 * @param     $field_name       field name
 	 * @param     $list_name        list name
@@ -474,59 +571,71 @@ class CardPage extends CreatePage
 	 * @param     $selected_choice  selected choice
 	 * @param     $show_empty       show empty value
 	 * @param     $action_prefix    action prefix
+	 * @return    $this
 	 */
 	public function editListField($field_name, $list_name, $list_choices, $selected_choice = '', $show_empty = 0, $action_prefix = 'set_')
 	{
 		$field_content = $this->form->listInput($list_name, $list_choices, $selected_choice, $show_empty);
 
 		$this->editField($field_name, $field_content, $action_prefix.$list_name);
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a radio input(s)
+	 * Add a table field with a radio input(s)
 	 *
 	 * @param     $field_name       field name
 	 * @param     $radio_name       radio inputs name
 	 * @param     $radio_list       list of radio inputs, e.: array('radio_1' => 'Radio 1', 'radio_2' => 'Radio 2')
 	 * @param     $selected         selected radio input
 	 * @param     $action_prefix    action prefix
+	 * @return    $this
 	 */
 	public function editRadioListField($field_name, $radio_name, $radio_list, $selected = '', $action_prefix = 'set_')
 	{
-		$field_content = $this->form->radioList($radio_name, $radio_list, $selected, true);
+		$field_content = $this->form->radioList($radio_name, $radio_list, $selected);
 
 		$this->editField($field_name, $field_content, $action_prefix.$radio_name);
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a checkbox input(s)
+	 * Add a table field with a checkbox input(s)
 	 *
 	 * @param     $field_name       field name
 	 * @param     $check_name       checkbox inputs name
 	 * @param     $check_list       list of checkbox inputs, e.: array('check_1' => 'Check 1', 'check_2' => 'Check 2')
 	 * @param     $selected         selected checkbox input
 	 * @param     $action_prefix    action prefix
+	 * @return    $this
 	 */
 	public function editCheckListField($field_name, $check_name, $check_list, $selected = '', $action_prefix = 'set_')
 	{
-		$field_content = $this->form->checkList($check_name, $check_list, $selected, true);
+		$field_content = $this->form->checkList($check_name, $check_list, $selected);
 
 		$this->editField($field_name, $field_content, $action_prefix.$check_name);
+
+		return $this;
 	}
 
 	/**
-	 * add a table field with a color picker
+	 * Add a table field with a color picker
 	 *
 	 * @param     $field_name        field name
 	 * @param     $input_name        input name
 	 * @param     $input_value       input value
 	 * @param     $action_prefix     action prefix
+	 * @return    $this
 	 */
 	public function editColorField($field_name, $input_name, $input_value = '', $action_prefix = 'set_')
 	{
 		$field_content = $this->form->colorInput($input_name, $input_value);
 		
 		$this->editField($field_name, $field_content, $action_prefix.$input_name);
+
+		return $this;
 	}
 
 	/**
@@ -537,7 +646,7 @@ class CardPage extends CreatePage
 	 */
 	protected function printRelatedObjects($object)
 	{
-		if (is_object($object))
+		if (is_object($object) && isset($object->id))
 		{
 			global $conf, $langs, $dolibase_config;
 
@@ -548,7 +657,7 @@ class CardPage extends CreatePage
 			// Dolibase object linking feature
 			if ($conf->global->$const_name)
 			{
-				$langs->load('related_objects@'.$dolibase_config['langs']['path']);
+				$langs->load('related_objects@'.$dolibase_config['main']['path']);
 
 				show_related_objects($object);
 			}
@@ -577,7 +686,7 @@ class CardPage extends CreatePage
 	 */
 	protected function printDocuments($object)
 	{
-		if (is_object($object))
+		if (is_object($object) && isset($object->id))
 		{
 			global $db, $conf, $user;
 			
@@ -615,7 +724,7 @@ class CardPage extends CreatePage
 	 */
 	protected function printMailForm($object)
 	{
-		if (is_object($object))
+		if (is_object($object) && isset($object->id))
 		{
 			global $langs, $user, $conf;
 
@@ -671,6 +780,7 @@ class CardPage extends CreatePage
 	/**
 	 * Generate page beginning
 	 *
+	 * @return  $this
 	 */
 	public function begin()
 	{
@@ -679,7 +789,7 @@ class CardPage extends CreatePage
 		// Select mail models is same action as presend
 		if (GETPOST('modelselected')) $action = 'presend';
 
-		parent::begin();
+		return parent::begin();
 	}
 
 	/**

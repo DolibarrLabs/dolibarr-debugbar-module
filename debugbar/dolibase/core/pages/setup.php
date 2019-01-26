@@ -15,8 +15,9 @@
  * 
  */
 
-dolibase_include_once('/core/class/form_page.php');
+dolibase_include_once('core/class/form_page.php');
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/lib/ajax.lib.php';
 
 /**
  * SetupPage class
@@ -68,6 +69,14 @@ class SetupPage extends FormPage
 	 * @var boolean used to add extrafields tab
 	 */
 	protected $add_extrafields_tab = false;
+	/**
+	 * @var boolean used to add changelog tab
+	 */
+	protected $add_changelog_tab = false;
+	/**
+	 * @var boolean used to enable/disable ajax for switch options
+	 */
+	protected $use_ajax_to_switch_on_off = false;
 
 
 	/**
@@ -77,22 +86,24 @@ class SetupPage extends FormPage
 	 * @param     $access_perm                Access permission
 	 * @param     $disable_default_actions    Disable default actions
 	 * @param     $add_extrafields_tab        Add extrafields tab
+	 * @param     $add_changelog_tab          Add changelog tab
 	 * @param     $const_name_prefix          Constant name prefix
 	 * @param     $doc_model_type             Document model type
 	 * @param     $doc_object_class           Document object class
 	 * @param     $doc_object_path            Document object path
 	 */
-	public function __construct($page_title = 'Setup', $access_perm = '$user->admin', $disable_default_actions = false, $add_extrafields_tab = false, $const_name_prefix = '', $doc_model_type = '', $doc_object_class = '', $doc_object_path = '')
+	public function __construct($page_title = 'Setup', $access_perm = '$user->admin', $disable_default_actions = false, $add_extrafields_tab = false, $add_changelog_tab = false, $const_name_prefix = '', $doc_model_type = '', $doc_object_class = '', $doc_object_path = '')
 	{
 		global $langs, $dolibase_config;
 
 		// Load lang files
-		$langs->load("admin");
-		$langs->load("setup_page@".$dolibase_config['langs']['path']);
+		$langs->load('admin');
+		$langs->load('setup_page@'.$dolibase_config['main']['path']);
 
 		// Set attributes
 		$this->disable_default_actions = $disable_default_actions;
 		$this->add_extrafields_tab     = $add_extrafields_tab;
+		$this->add_changelog_tab       = $add_changelog_tab;
 		$this->const_name_prefix       = (! empty($const_name_prefix) ? $const_name_prefix : get_rights_class(true));
 
 		// Set numbering model constant name
@@ -105,7 +116,7 @@ class SetupPage extends FormPage
 		$this->doc_object_path      = $doc_object_path;
 
 		// Add some custom css
-		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('/core/css/setup.css.php').'">'."\n");
+		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('core/css/setup.css.php').'">'."\n");
 
 		parent::__construct($page_title, $access_perm);
 	}
@@ -116,6 +127,7 @@ class SetupPage extends FormPage
 	 * @param    $link       Link href
 	 * @param    $label      Link label
 	 * @param    $enable     Condition to enable
+	 * @return   $this
 	 */
 	public function setTitleLink($link, $label, $enable = '$user->admin')
 	{
@@ -124,16 +136,21 @@ class SetupPage extends FormPage
 		if (empty($enable) || verifCond($enable)) {
 			$this->title_link = '<a href="'.$link.'">'.$langs->trans($label).'</a>';
 		}
+
+		return $this;
 	}
 
 	/**
 	 * Set Document model(s) preview picture
 	 *
 	 * @param    $picture     Document model preview picture
+	 * @return   $this
 	 */
 	public function setDocModelPreviewPicture($picture)
 	{
 		$this->doc_model_preview_picture = $picture;
+
+		return $this;
 	}
 
 	/**
@@ -147,20 +164,29 @@ class SetupPage extends FormPage
 			global $conf, $db, $langs, $dolibase_config;
 
 			// Libraries
-			require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
+			require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 
 			// Parameters
 			$action = GETPOST('action', 'alpha');
 
-			// Actions
-			if (preg_match('/set_(.*)/', $action, $reg))
+			/**
+			 * Actions
+			 */
+
+			// Set a constant
+			if (preg_match('/^set_(.*)/', $action, $reg))
 			{
 				$code = $reg[1];
-				$value = GETPOST($code);
+				$type = GETPOST('option_type', 'alpha');
+				$value = (is_submitted($code) ? GETPOST($code) : (in_array($type, array('text', 'multiselect')) ? '' : 1));
+
+				if (is_array($value)) {
+					$value = array_to_string($value);
+				}
 
 				if (dolibarr_set_const($db, $code, $value, 'chaine', 0, '', $conf->entity) > 0)
 				{
-					dolibase_redirect($_SERVER["PHP_SELF"]);
+					dolibase_redirect($_SERVER["PHP_SELF"].'?mainmenu=home');
 				}
 				else
 				{
@@ -168,13 +194,14 @@ class SetupPage extends FormPage
 				}
 			}
 
-			else if (preg_match('/del_(.*)/', $action, $reg))
+			// Delete a constant
+			else if (preg_match('/^del_(.*)/', $action, $reg))
 			{
 				$code = $reg[1];
-				
+
 				if (dolibarr_del_const($db, $code, $conf->entity) > 0)
 				{
-					dolibase_redirect($_SERVER["PHP_SELF"]);
+					dolibase_redirect($_SERVER["PHP_SELF"].'?mainmenu=home');
 				}
 				else
 				{
@@ -182,6 +209,7 @@ class SetupPage extends FormPage
 				}
 			}
 
+			// Update numbering model mask
 			else if ($action == 'updateMask')
 			{
 				$maskconst = GETPOST('maskconst','alpha');
@@ -194,14 +222,15 @@ class SetupPage extends FormPage
 
 				if (! $error)
 				{
-					setEventMessages($langs->trans("SetupSaved"), null, 'mesgs');
+					setEventMessages($langs->trans('SetupSaved'), null, 'mesgs');
 				}
 				else
 				{
-					setEventMessages($langs->trans("Error"), null, 'errors');
+					setEventMessages($langs->trans('Error'), null, 'errors');
 				}
 			}
 
+			// Set/Activate a numbering model
 			else if ($action == 'setmod')
 			{
 				$value = GETPOST('value', 'alpha');
@@ -249,7 +278,7 @@ class SetupPage extends FormPage
 				}
 			}
 
-			// specimen
+			// Generate specimen document
 			else if ($action == 'specimen')
 			{
 				$model = GETPOST('model','alpha');
@@ -259,7 +288,7 @@ class SetupPage extends FormPage
 					$classname = $this->doc_object_class;
 				}
 				else {
-					dolibase_include_once('/core/class/custom_object.php');
+					dolibase_include_once('core/class/custom_object.php');
 					$classname = 'CustomObject';
 				}
 
@@ -275,7 +304,7 @@ class SetupPage extends FormPage
 					$object->ref           = 'SPECIMEN';
 					$object->specimen      = 1;
 					$object->creation_date = time();
-					$object->lines         = array(
+					$object->doc_lines     = array(
 						array('name' => 'Lorem ipsum', 'value' => 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.'),
 						array('name' => 'Lorem ipsum', 'value' => 'Aliquam tincidunt mauris eu risus.'),
 						array('name' => 'Lorem ipsum', 'value' => 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec odio. Quisque volutpat mattis eros. Nullam malesuada erat ut turpis. Suspendisse urna nibh, viverra non, semper suscipit, posuere a, pede.')
@@ -284,14 +313,14 @@ class SetupPage extends FormPage
 
 				// Search template files
 				$dirmodels = array(
-					dolibase_buildpath("core/doc_models/"),
-					dol_buildpath($dolibase_config['module']['folder']."/core/doc_models/")
+					dolibase_buildpath('core/doc_models/'),
+					dol_buildpath($dolibase_config['module']['folder'].'/core/doc_models/')
 				);
 				$error = 0;
 
 				foreach ($dirmodels as $dir)
 				{
-					$file = $dir."pdf_".$model.".modules.php";
+					$file = $dir.'pdf_'.$model.'.modules.php';
 					if (file_exists($file))
 					{
 						$error = 0;
@@ -303,7 +332,7 @@ class SetupPage extends FormPage
 						// Generate document
 						if ($module->write_file($object, $langs) > 0)
 						{
-							dolibase_redirect(DOL_URL_ROOT."/document.php?modulepart=".$this->modulepart."&file=SPECIMEN.pdf");
+							dolibase_redirect(DOL_URL_ROOT.'/document.php?modulepart='.$this->modulepart.'&file=SPECIMEN.pdf');
 						}
 						else
 						{
@@ -321,8 +350,8 @@ class SetupPage extends FormPage
 
 				if ($error)
 				{
-					setEventMessages($langs->trans("ErrorModuleNotFound"), null, 'errors');
-					dol_syslog($langs->trans("ErrorModuleNotFound"), LOG_ERR);
+					setEventMessages($langs->trans('ErrorModuleNotFound'), null, 'errors');
+					dol_syslog($langs->trans('ErrorModuleNotFound'), LOG_ERR);
 				}
 			}
 		}
@@ -338,17 +367,20 @@ class SetupPage extends FormPage
 
 		// Add sub title
 		if (empty($this->title_link) && $user->admin) {
-			$this->title_link = '<a href="'.DOL_URL_ROOT.'/admin/modules.php?mainmenu=home">'.$langs->trans("BackToModuleList").'</a>';
+			$this->title_link = '<a href="'.DOL_URL_ROOT.'/admin/modules.php?mainmenu=home">'.$langs->trans('BackToModuleList').'</a>';
 		}
 		$this->addSubTitle($this->title, 'title_setup.png', $this->title_link);
 
 		// Add default tabs
 		if (empty($this->tabs)) {
-			$this->addTab("Settings", "/".$dolibase_config['module']['folder']."/admin/".$dolibase_config['other']['setup_page']."?mainmenu=home", true);
+			$this->addTab('Settings', $dolibase_config['module']['folder'].'/admin/'.$dolibase_config['other']['setup_page'].'?mainmenu=home', true);
 			if ($this->add_extrafields_tab) {
-				$this->addTab("ExtraFields", "/".$dolibase_config['module']['folder']."/admin/extrafields.php?mainmenu=home");
+				$this->addTab('ExtraFields', $dolibase_config['module']['folder'].'/admin/extrafields.php?mainmenu=home');
 			}
-			$this->addTab("About", "/".$dolibase_config['module']['folder']."/admin/".$dolibase_config['other']['about_page']."?mainmenu=home");
+			if ($this->add_changelog_tab) {
+				$this->addTab('Changelog', $dolibase_config['module']['folder'].'/admin/changelog.php?mainmenu=home');
+			}
+			$this->addTab('About', $dolibase_config['module']['folder'].'/admin/'.$dolibase_config['other']['about_page'].'?mainmenu=home');
 		}
 		
 		parent::generate();
@@ -365,18 +397,47 @@ class SetupPage extends FormPage
 	}
 
 	/**
+	 * Set $use_ajax_to_switch_on_off attribute to true
+	 *
+	 * @return   $this
+	 */
+	public function useAjaxToSwitchOnOff()
+	{
+		$this->use_ajax_to_switch_on_off = true;
+
+		return $this;
+	}
+
+	/**
+	 * Show setup_not_available template (only once)
+	 *
+	 * @return   $this
+	 */
+	public function setupNotAvailable()
+	{
+		$template_path = dolibase_buildpath('core/tpl/setup_not_available.php');
+
+		$this->showTemplate($template_path, true, true);
+
+		return $this;
+	}
+
+	/**
 	 * Create a new table for options
 	 *
 	 * @param     $first_column_name     First column name
+	 * @return    $this
 	 */
 	public function newOptionsTable($first_column_name = 'Option')
 	{
 		$options_table_cols = array(
-								array('name' => $first_column_name),
-								array('name' => 'Value', 'attr' => 'align="center" width="100"')
-							);
+			array('name' => $first_column_name),
+			array('name' => 'Value', 'attr' => 'align="center" width="100"')
+		);
 
 		$this->openTable($options_table_cols);
+
+		return $this;
 	}
 
 	/**
@@ -388,6 +449,7 @@ class SetupPage extends FormPage
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
 	 * @param     $form_enctype      Form enctype attribute
+	 * @return    $this
 	 */
 	public function addOption($option_desc, $option_content, $const_name = '', $morehtmlright = '', $width = 300, $form_enctype = '')
 	{
@@ -404,9 +466,12 @@ class SetupPage extends FormPage
 		}
 		echo $option_content."\n";
 		if (! empty($const_name)) {
-			echo '&nbsp;&nbsp;<input type="submit" class="button" value="'.$langs->trans("Modify").'">&nbsp;&nbsp;'."\n";
+			echo '&nbsp;&nbsp;<input type="submit" class="button" value="'.$langs->trans('Modify').'">&nbsp;&nbsp;'."\n";
+			echo "</form>\n";
 		}
-		echo "</form>\n</td>\n</tr>\n";
+		echo "</td>\n</tr>\n";
+
+		return $this;
 	}
 
 	/**
@@ -416,6 +481,7 @@ class SetupPage extends FormPage
 	 * @param     $const_name        Option constant name
 	 * @param     $disabled          disable option or not
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
+	 * @return    $this
 	 */
 	public function addSwitchOption($option_desc, $const_name, $disabled = false, $morehtmlright = '')
 	{
@@ -426,15 +492,24 @@ class SetupPage extends FormPage
 
 		echo '<tr '.$bc[$this->odd].'><td'.$more_attr.'>'.$langs->trans($option_desc).$morehtmlright.'</td>'."\n";
 		echo '<td'.$more_attr.' align="right">'."\n";
-		if (empty($conf->global->$const_name))
+		if ($this->use_ajax_to_switch_on_off && ! empty($conf->use_javascript_ajax) && function_exists('ajax_constantonoff'))
 		{
-			echo '<a href="'.$_SERVER['PHP_SELF'].'?action=set_'.$const_name.'&amp;'.$const_name.'=1">'.img_picto($langs->trans("Disabled"),'switch_off').'</a>'."\n";
+			echo ajax_constantonoff($const_name);
 		}
 		else
 		{
-			echo '<a href="'.$_SERVER['PHP_SELF'].'?action=set_'.$const_name.'&amp;'.$const_name.'=0">'.img_picto($langs->trans("Enabled"),'switch_on').'</a>'."\n";
+			if (empty($conf->global->$const_name))
+			{
+				echo '<a href="'.$_SERVER['PHP_SELF'].'?action=set_'.$const_name.'">'.img_picto($langs->trans('Disabled'), 'switch_off').'</a>'."\n";
+			}
+			else
+			{
+				echo '<a href="'.$_SERVER['PHP_SELF'].'?action=del_'.$const_name.'">'.img_picto($langs->trans('Enabled'), 'switch_on').'</a>'."\n";
+			}
 		}
 		echo "&nbsp;&nbsp;&nbsp;&nbsp;</td>\n</tr>\n";
+
+		return $this;
 	}
 
 	/**
@@ -445,6 +520,7 @@ class SetupPage extends FormPage
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $size              Option textbox size
 	 * @param     $width             Option last column/td width
+	 * @return    $this
 	 */
 	public function addTextOption($option_desc, $const_name, $morehtmlright = '', $size = 16, $width = 300)
 	{
@@ -453,6 +529,8 @@ class SetupPage extends FormPage
 		$option_content = $this->form->textInput($const_name, $conf->global->$const_name, $size);
 
 		$this->addOption($option_desc, $option_content, $const_name, $morehtmlright, $width);
+
+		return $this;
 	}
 
 	/**
@@ -464,6 +542,7 @@ class SetupPage extends FormPage
 	 * @param     $max               Option maximum number
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
+	 * @return    $this
 	 */
 	public function addNumberOption($option_desc, $const_name, $min = 0, $max = 100, $morehtmlright = '', $width = 300)
 	{
@@ -472,6 +551,8 @@ class SetupPage extends FormPage
 		$option_content = $this->form->numberInput($const_name, $conf->global->$const_name, $min, $max);
 
 		$this->addOption($option_desc, $option_content, $const_name, $morehtmlright, $width);
+
+		return $this;
 	}
 
 	/**
@@ -483,6 +564,7 @@ class SetupPage extends FormPage
 	 * @param     $max               Option maximum value
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
+	 * @return    $this
 	 */
 	public function addRangeOption($option_desc, $const_name, $min = 0, $max = 100, $morehtmlright = '', $width = 300)
 	{
@@ -491,6 +573,8 @@ class SetupPage extends FormPage
 		$option_content = $this->form->rangeInput($const_name, $conf->global->$const_name, $min, $max);
 
 		$this->addOption($option_desc, $option_content, $const_name, $morehtmlright, $width);
+
+		return $this;
 	}
 
 	/**
@@ -501,6 +585,7 @@ class SetupPage extends FormPage
 	 * @param     $list              Options list array
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
+	 * @return    $this
 	 */
 	public function addListOption($option_desc, $const_name, $list, $morehtmlright = '', $width = 300)
 	{
@@ -509,6 +594,33 @@ class SetupPage extends FormPage
 		$option_content = $this->form->listInput($const_name, $list, $conf->global->$const_name);
 
 		$this->addOption($option_desc, $option_content, $const_name, $morehtmlright, $width);
+
+		return $this;
+	}
+
+	/**
+	 * Add a new multi select list option
+	 *
+	 * @since     2.9.5
+	 * @param     $option_desc       Option description
+	 * @param     $const_name        Option constant name
+	 * @param     $list              Options list array
+	 * @param     $morehtmlright     more HTML to add on the right of the option description
+	 * @param     $width             Option last column/td width
+	 * @return    $this
+	 */
+	public function addMultiSelectListOption($option_desc, $const_name, $list, $morehtmlright = '', $width = 300)
+	{
+		global $conf;
+
+		$selected = string_to_array($conf->global->$const_name);
+
+		$option_content = '<input type="hidden" name="option_type" value="multiselect" />'."\n";
+		$option_content.= $this->form->multiSelectListInput($const_name, $list, $selected, false, '60%');
+
+		$this->addOption($option_desc, $option_content, $const_name, $morehtmlright, $width);
+
+		return $this;
 	}
 
 	/**
@@ -518,6 +630,7 @@ class SetupPage extends FormPage
 	 * @param     $const_name        Option constant name
 	 * @param     $morehtmlright     more HTML to add on the right of the option description
 	 * @param     $width             Option last column/td width
+	 * @return    $this
 	 */
 	public function addColorOption($option_desc, $const_name, $morehtmlright = '', $width = 300)
 	{
@@ -526,6 +639,34 @@ class SetupPage extends FormPage
 		$option_content = $this->form->colorInput($const_name, $conf->global->$const_name);
 
 		$this->addOption($option_desc, $option_content, $const_name, $morehtmlright, $width);
+
+		return $this;
+	}
+
+	/**
+	 * Open buttons div (if not already opened)
+	 *
+	 */
+	protected function openButtonsDiv()
+	{
+		if (! $this->close_buttons_div) {
+			dol_fiche_end();
+			echo '<div class="tabsAction force-center">';
+			$this->close_buttons_div = true;
+			$this->add_fiche_end = false;
+		}
+	}
+
+	/**
+	 * Close buttons div (if opened)
+	 *
+	 */
+	protected function closeButtonsDiv()
+	{
+		if ($this->close_buttons_div) {
+			echo '</div>';
+			$this->close_buttons_div = false;
+		}
 	}
 
 	/**
@@ -536,29 +677,61 @@ class SetupPage extends FormPage
 	 * @param     $target               button target
 	 * @param     $class                button class
 	 * @param     $close_parent_div     should close parent div or not
+	 * @return    $this
 	 */
 	public function addButton($name, $href = '#', $target = '_self', $class = 'butAction', $close_parent_div = false)
 	{
 		global $langs;
 
-		if (! $this->close_buttons_div) {
-			dol_fiche_end();
-			echo '<div class="tabsAction" style="text-align: center;">';
-			$this->close_buttons_div = true;
-		}
+		$this->openButtonsDiv();
 
 		echo '<a class="'.$class.'" href="'.$href.'" target="'.$target.'">'.$langs->trans($name).'</a>';
 
 		if ($close_parent_div) {
-			echo '</div>';
-			$this->close_buttons_div = false;
+			$this->closeButtonsDiv();
 		}
+
+		return $this;
+	}
+
+	/**
+	 * Add a confirmation button to the page
+	 *
+	 * @param     $name                 button name
+	 * @param     $id                   button id (used to display the confirmation dialog)
+	 * @param     $href                 button href
+	 * @param     $target               button target
+	 * @param     $class                button class
+	 * @param     $close_parent_div     should close parent div or not
+	 * @return    $this
+	 */
+	public function addConfirmButton($name, $id, $href = '#', $target = '_self', $class = 'butAction', $close_parent_div = false)
+	{
+		if (js_enabled())
+		{
+			global $langs;
+
+			$this->openButtonsDiv();
+
+			echo '<span class="'.$class.'" id="'.$id.'">'.$langs->trans($name).'</span>';
+
+			if ($close_parent_div) {
+				$this->closeButtonsDiv();
+			}
+		}
+		else
+		{
+			$this->addButton($name, $href, $target, $class, $close_parent_div);
+		}
+
+		return $this;
 	}
 
 	/**
 	 * Print numbering models
 	 *
 	 * @param     $model_name     Numbering model name
+	 * @return    $this
 	 */
 	public function printNumModels($model_name = '')
 	{
@@ -566,18 +739,18 @@ class SetupPage extends FormPage
 
 		echo '<table class="noborder" width="100%">';
 		echo '<tr class="liste_titre">';
-		echo '<td>'.$langs->trans("Name").'</td>';
-		echo '<td>'.$langs->trans("Description").'</td>';
-		echo '<td class="nowrap">'.$langs->trans("Example").'</td>';
-		echo '<td align="center" width="60">'.$langs->trans("Status").'</td>';
-		echo '<td align="center" width="16">'.$langs->trans("ShortInfo").'</td>';
+		echo '<td>'.$langs->trans('Name').'</td>';
+		echo '<td>'.$langs->trans('Description').'</td>';
+		echo '<td class="nowrap">'.$langs->trans('Example').'</td>';
+		echo '<td align="center" width="60">'.$langs->trans('Status').'</td>';
+		echo '<td align="center" width="16">'.$langs->trans('ShortInfo').'</td>';
 		echo '</tr>'."\n";
 
 		clearstatcache();
 
 		$dirmodels = array(
-			dolibase_buildpath("core/num_models/"),
-			dol_buildpath($dolibase_config['module']['folder']."/core/num_models/")
+			dolibase_buildpath('core/num_models/'),
+			dol_buildpath($dolibase_config['module']['folder'].'/core/num_models/')
 		);
 
 		foreach ($dirmodels as $dir)
@@ -623,21 +796,21 @@ class SetupPage extends FormPage
 								echo '<td align="center">';
 								if ($conf->global->{$this->num_model_const_name} == $file)
 								{
-									echo img_picto($langs->trans("Activated"), 'switch_on');
+									echo img_picto($langs->trans('Activated'), 'switch_on');
 								}
 								else
 								{
 									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=setmod&amp;value='.$file.'">';
-									echo img_picto($langs->trans("Disabled"), 'switch_off');
+									echo img_picto($langs->trans('Disabled'), 'switch_off');
 									echo '</a>';
 								}
 								echo '</td>';
 
 								// Info
-								$htmltooltip = $langs->trans("Version").': <b>'.$model->getVersion().'</b><br>';
+								$htmltooltip = $langs->trans('Version').': <b>'.$model->getVersion().'</b><br>';
 								$nextval = $model->getNextValue();
-								if ("$nextval" != $langs->trans("NotAvailable")) {  // Keep " on nextval
-									$htmltooltip.= $langs->trans("NextValue").': ';
+								if ("$nextval" != $langs->trans('NotAvailable')) { // Keep " on nextval
+									$htmltooltip.= $langs->trans('NextValue').': ';
 									if ($nextval) {
 										if (preg_match('/^Error/',$nextval) || $nextval == 'NotConfigured') {
 											$nextval = $langs->trans($nextval);
@@ -662,11 +835,14 @@ class SetupPage extends FormPage
 		}
 
 		echo "</table><br>\n";
+
+		return $this;
 	}
 
 	/**
 	 * Print document models
 	 *
+	 * @return    $this
 	 */
 	public function printDocModels()
 	{
@@ -697,19 +873,19 @@ class SetupPage extends FormPage
 
 		echo '<table class="noborder" width="100%">';
 		echo '<tr class="liste_titre">';
-		echo '<td>'.$langs->trans("Name").'</td>';
-		echo '<td>'.$langs->trans("Description").'</td>';
-		echo '<td align="center" width="60">'.$langs->trans("Status").'</td>';
-		echo '<td align="center" width="60">'.$langs->trans("Default").'</td>';
-		echo '<td align="center" width="38">'.$langs->trans("ShortInfo").'</td>';
-		echo '<td align="center" width="38">'.$langs->trans("Preview").'</td>';
+		echo '<td>'.$langs->trans('Name').'</td>';
+		echo '<td>'.$langs->trans('Description').'</td>';
+		echo '<td align="center" width="60">'.$langs->trans('Status').'</td>';
+		echo '<td align="center" width="60">'.$langs->trans('Default').'</td>';
+		echo '<td align="center" width="38">'.$langs->trans('ShortInfo').'</td>';
+		echo '<td align="center" width="38">'.$langs->trans('Preview').'</td>';
 		echo '</tr>'."\n";
 
 		clearstatcache();
 
 		$dirmodels = array(
-			dolibase_buildpath("core/doc_models/"),
-			dol_buildpath($dolibase_config['module']['folder']."/core/doc_models/")
+			dolibase_buildpath('core/doc_models/'),
+			dol_buildpath($dolibase_config['module']['folder'].'/core/doc_models/')
 		);
 
 		foreach ($dirmodels as $dir)
@@ -749,14 +925,14 @@ class SetupPage extends FormPage
 								{
 									echo '<td align="center">'."\n";
 									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=deldoc&value='.$model->name.'">';
-									echo img_picto($langs->trans("Enabled"), 'switch_on');
+									echo img_picto($langs->trans('Enabled'), 'switch_on');
 									echo '</a>';
 									echo '</td>';
 								}
 								else
 								{
 									echo '<td align="center">'."\n";
-									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&value='.$model->name.'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&value='.$model->name.'">'.img_picto($langs->trans('Disabled'), 'switch_off').'</a>';
 									echo "</td>";
 								}
 
@@ -764,25 +940,25 @@ class SetupPage extends FormPage
 								echo '<td align="center">';
 								if ($conf->global->{$this->doc_model_const_name} == $model->name)
 								{
-									echo img_picto($langs->trans("Default"), 'on');
+									echo img_picto($langs->trans('Default'), 'on');
 								}
 								else
 								{
-									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=setdefaultdoc&value='.$model->name.'" alt="'.$langs->trans("Default").'">'.img_picto($langs->trans("Disabled"),'off').'</a>';
+									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=setdefaultdoc&value='.$model->name.'" alt="'.$langs->trans('Default').'">'.img_picto($langs->trans('Disabled'), 'off').'</a>';
 								}
 								echo '</td>';
 
 								// Info
-								$htmltooltip = $langs->trans("Name").': '.$model->name;
-								$htmltooltip.= '<br>'.$langs->trans("Type").': '.($model->type?$model->type:$langs->trans("Unknown"));
+								$htmltooltip = $langs->trans('Name').': '.$model->name;
+								$htmltooltip.= '<br>'.$langs->trans('Type').': '.($model->type?$model->type:$langs->trans('Unknown'));
 								if ($model->type == 'pdf')
 								{
-									$htmltooltip.= '<br>'.$langs->trans("Width").'/'.$langs->trans("Height").': '.$model->page_largeur.'/'.$model->page_hauteur;
+									$htmltooltip.= '<br>'.$langs->trans('Width').'/'.$langs->trans('Height').': '.$model->page_largeur.'/'.$model->page_hauteur;
 								}
-								$htmltooltip.= '<br><br><u>'.$langs->trans("FeaturesSupported").':</u>';
-								$htmltooltip.= '<br>'.$langs->trans("Logo").': '.yn($model->option_logo, 1, 1);
-								$htmltooltip.= '<br>'.$langs->trans("MultiLanguage").': '.yn($model->option_multilang, 1, 1);
-								$htmltooltip.= '<br>'.$langs->trans("WatermarkOnDraft").': '.yn($model->option_draft_watermark, 1, 1);
+								$htmltooltip.= '<br><br><u>'.$langs->trans('FeaturesSupported').':</u>';
+								$htmltooltip.= '<br>'.$langs->trans('Logo').': '.yn($model->option_logo, 1, 1);
+								$htmltooltip.= '<br>'.$langs->trans('MultiLanguage').': '.yn($model->option_multilang, 1, 1);
+								$htmltooltip.= '<br>'.$langs->trans('WatermarkOnDraft').': '.yn($model->option_draft_watermark, 1, 1);
 
 								echo '<td align="center">';
 								echo $this->form->textwithpicto('', $htmltooltip, 1, 0);
@@ -793,11 +969,11 @@ class SetupPage extends FormPage
 								if ($model->type == 'pdf')
 								{
 									$picto = (! empty($this->doc_model_preview_picture) ? $this->doc_model_preview_picture : $dolibase_config['module']['picture'].'@'.$dolibase_config['module']['folder']);
-									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=specimen&model='.$model->name.'">'.img_object($langs->trans("Preview"), $picto).'</a>';
+									echo '<a href="'.$_SERVER["PHP_SELF"].'?action=specimen&model='.$model->name.'">'.img_object($langs->trans('Preview'), $picto).'</a>';
 								}
 								else
 								{
-									echo img_object($langs->trans("PreviewNotAvailable"), 'generic');
+									echo img_object($langs->trans('PreviewNotAvailable'), 'generic');
 								}
 								echo '</td>';
 
@@ -811,5 +987,7 @@ class SetupPage extends FormPage
 		}
 
 		echo "</table><br>\n";
+
+		return $this;
 	}
 }

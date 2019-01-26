@@ -221,9 +221,7 @@ function show_related_objects($object)
 {
 	global $langs, $db;
 
-	dolibase_include_once('/core/class/crud_object.php');
-	$relation = new CrudObject();
-	$relation->setTableName('element_element');
+	dolibase_include_once('core/class/query_builder.php');
 
 	$action = GETPOST('action');
 
@@ -253,8 +251,7 @@ function show_related_objects($object)
 		$idLink = GETPOST('id_link');
 
 		if($idLink) {
-			$relation->id = $idLink;
-			$res = $relation->delete();
+			$res = QueryBuilder::getInstance()->delete('element_element')->where("rowid = $idLink")->execute();
 		}
 	}
 
@@ -278,7 +275,7 @@ function show_related_objects($object)
 
 			<table class="noborder allwidth">
 				<tr class="liste_titre">
-					<td><?php echo $langs->trans("Ref"); ?> <input type="text" id="add_related_object" name="add_related_object" value="" class="flat" /> <input type="submit" id="add_related_object_btn" name="add_related_object_btn" class="button" value="<?php echo $langs->trans('AddRelated') ?>" style="display:none;" /></td>
+					<td><?php echo $langs->trans("Ref"); ?> <input type="text" id="add_related_object" name="add_related_object" value="" class="flat" /> <input type="submit" id="add_related_object_btn" name="add_related_object_btn" class="button hidden" value="<?php echo $langs->trans('AddRelated') ?>" /></td>
 					<td align="center"><?php echo $langs->trans("Date"); ?></td>
 					<td align="center"><?php echo $langs->trans("Status"); ?></td>
 					<td align="center"><?php echo $langs->trans("Action"); ?></td>
@@ -328,11 +325,7 @@ function show_related_objects($object)
 							}
 
 							// Fetch relation
-							$relation->fetchWhere(array('rowid'), array('fk_source'  => $sourceid,
-																		'fk_target'  => $object->id,
-																		'sourcetype' => $sourcetype,
-																		'targettype' => $object->element
-																	));
+							$relation = QueryBuilder::getInstance()->select('rowid as id')->from('element_element')->where("fk_source = $sourceid AND fk_target = $object->id AND sourcetype = '$sourcetype' AND targettype = '$object->element'")->result()[0];
 
 							?>
 							<tr class="<?php echo $class; ?>">
@@ -359,7 +352,7 @@ function show_related_objects($object)
 			$('#add_related_object').autocomplete({
 				source: function(request, response) {
 					$.ajax({
-						url: "<?php echo dolibase_buildurl('/core/ajax/related_objects.php'); ?>",
+						url: "<?php echo dolibase_buildurl('core/ajax/related_objects.php'); ?>",
 						dataType: "json",
 						data: {
 							key: request.term,
@@ -394,7 +387,7 @@ function show_related_objects($object)
 						$('#add_related_object').val(ui.item.label.trim());
 						$('#related_object_type').val(ui.item.object);
 
-						$('#add_related_object_btn').css('display','inline-block');
+						$('#add_related_object_btn').removeClass('hidden');
 
 						return false;
 					}

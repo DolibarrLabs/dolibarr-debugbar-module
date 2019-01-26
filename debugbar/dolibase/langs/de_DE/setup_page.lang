@@ -2,11 +2,9 @@
 #
 # Copyright (C) 2018 AXeL
 
-#
-# Generic
-#
 Setup = Konfiguration
 Settings = die Einstellungen
+Changelog = Änderungsprotokoll
 About = Über
 Option = Möglichkeit
 Value = Wert

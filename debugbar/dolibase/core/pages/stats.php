@@ -15,8 +15,8 @@
  * 
  */
 
-dolibase_include_once('/core/class/form_page.php');
-require_once DOL_DOCUMENT_ROOT . '/core/class/dolgraph.class.php';
+dolibase_include_once('core/class/form_page.php');
+dolibase_include_once('core/class/chart.php');
 
 /**
  * StatsPage class
@@ -43,12 +43,15 @@ class StatsPage extends FormPage
 	/**
 	 * Generate page beginning
 	 *
+	 * @return  $this
 	 */
 	public function begin()
 	{
 		parent::begin();
 
 		echo '<div class="fichecenter">';
+
+		return $this;
 	}
 
 	/**
@@ -69,7 +72,7 @@ class StatsPage extends FormPage
 	{
 		echo '</div>';
 
-		echo '<div style="clear:both"></div>';
+		echo '<div class="clearboth"></div>';
 
 		parent::end();
 	}
@@ -77,41 +80,53 @@ class StatsPage extends FormPage
 	/**
 	 * Opens a left section
 	 *
+	 * @return    $this
 	 */
 	public function openLeftSection()
 	{
 		echo '<div class="fichethirdleft">';
+
+		return $this;
 	}
 
 	/**
 	 * Close a left section
 	 *
+	 * @return    $this
 	 */
 	public function closeLeftSection()
 	{
 		echo '</div>';
+
+		return $this;
 	}
 
 	/**
 	 * Opens a right section
 	 *
+	 * @return    $this
 	 */
 	public function openRightSection()
 	{
 		echo '<div class="fichetwothirdright"><div class="ficheaddleft">';
 
 		echo '<table class="border" width="100%"><tr valign="top"><td align="center">';
+
+		return $this;
 	}
 
 	/**
 	 * Close a right section
 	 *
+	 * @return    $this
 	 */
 	public function closeRightSection()
 	{
 		echo '</td></tr></table>';
 
 		echo '</div></div>';
+
+		return $this;
 	}
 
 	/**
@@ -121,13 +136,14 @@ class StatsPage extends FormPage
 	 * @param     $data       object data (to set years array)
 	 * @param     $title      form title
 	 * @param     $summary    form summary
+	 * @return    $this
 	 */
 	public function addFilterForm($fields, $data, $title = 'Filter', $summary = '')
 	{
 		global $langs;
 
 		// Get parameters
-		$nowyear = strftime("%Y", dol_now());
+		$nowyear = strftime('%Y', dol_now());
 		$year = GETPOST('year') > 0 ? GETPOST('year') : $nowyear;
 
 		// Set years array
@@ -152,15 +168,17 @@ class StatsPage extends FormPage
 			echo '<tr><td align="left">'.$langs->trans($label).'</td><td align="left">'.$content.'</td></tr>';
 		}
 		// Year field
-		echo '<tr><td align="left">'.$langs->trans("Year").'</td><td align="left">';
+		echo '<tr><td align="left">'.$langs->trans('Year').'</td><td align="left">';
 		if (! in_array($year, $arrayyears)) $arrayyears[$year] = $year;
 		if (! in_array($nowyear, $arrayyears)) $arrayyears[$nowyear] = $nowyear;
 		arsort($arrayyears);
 		echo $this->form->selectarray('year', $arrayyears, $year, 0);
 		echo '</td></tr>';
 		// Submit button
-		echo '<tr><td align="center" colspan="2"><input type="submit" name="submit" class="button" value="'.$langs->trans("Refresh").'"></td></tr>';
+		echo '<tr><td align="center" colspan="2"><input type="submit" name="submit" class="button" value="'.$langs->trans('Refresh').'"></td></tr>';
 		echo "</table></form><br>\n";
+
+		return $this;
 	}
 
 	/**
@@ -169,13 +187,14 @@ class StatsPage extends FormPage
 	 * @param     $title          graph title
 	 * @param     $data           grapĥ data
 	 * @param     $suffix         graph filename suffix
+	 * @return    $this
 	 */
 	public function addGraph($title, $data, $suffix)
 	{
 		global $langs, $user, $conf;
 
 		// Get parameters
-		$nowyear = strftime("%Y", dol_now());
+		$nowyear = strftime('%Y', dol_now());
 		$year = GETPOST('year') > 0 ? GETPOST('year') : $nowyear;
 		$startyear = $year-1; // $year-2;
 		$endyear = $year;
@@ -197,35 +216,25 @@ class StatsPage extends FormPage
 			$fileurl = DOL_URL_ROOT.'/viewimage.php?modulepart='.$this->modulepart.'stats&file='.$this->modulepart.$suffix.'-'.$year.'.png';
 		}
 
-		// Generate graph
-		$graph = new DolGraph();
-		$width = DolGraph::getDefaultGraphSizeForStats('width');
-		$height = DolGraph::getDefaultGraphSizeForStats('height');
-		if (! $graph->isGraphKo())
+		// Set legend
+		$i = $startyear;
+		$legend = array();
+		while ($i <= $endyear)
 		{
-			$i = $startyear;
-			$legend = array();
-			while ($i <= $endyear)
-			{
-				$legend[] = $i;
-				$i++;
-			}
-			$graph->SetData($data);
-			$graph->SetLegend($legend);
-			$graph->SetMaxValue($graph->GetCeilMaxValue());
-			$graph->SetMinValue(min(0, $graph->GetFloorMinValue()));
-			$graph->SetWidth($width);
-			$graph->SetHeight($height);
-			//$graph->SetYLabel($langs->trans("YLabel"));
-			$graph->SetShading(3);
-			$graph->SetHorizTickIncrement(1);
-			$graph->SetPrecisionY(0);
-			$graph->mode = 'depth';
-			$graph->SetTitle($langs->trans($title));
-
-			$graph->draw($filename, $fileurl);
-
-			echo $graph->show();
+			$legend[] = $i;
+			$i++;
 		}
+
+		// Generate graph
+		$graph = new Chart();
+		$graph->generate('bars', $data, $legend, $title);
+		//$graph->SetYLabel($langs->trans('YLabel'));
+		$graph->SetShading(3);
+		$graph->SetHorizTickIncrement(1);
+		$graph->SetPrecisionY(0);
+		$graph->mode = 'depth';
+		$graph->display($filename, $fileurl);
+
+		return $this;
 	}
 }

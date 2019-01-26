@@ -15,8 +15,8 @@
  * 
  */
 
-dolibase_include_once('/core/class/form_page.php');
-require_once DOL_DOCUMENT_ROOT . '/core/class/dolgraph.class.php';
+dolibase_include_once('core/class/form_page.php');
+dolibase_include_once('core/class/chart.php');
 
 /**
  * IndexPage class
@@ -43,12 +43,15 @@ class IndexPage extends FormPage
 	/**
 	 * Generate page beginning
 	 *
+	 * @return  $this
 	 */
 	public function begin()
 	{
 		parent::begin();
 
 		echo '<div class="fichecenter">';
+
+		return $this;
 	}
 
 	/**
@@ -65,37 +68,49 @@ class IndexPage extends FormPage
 	/**
 	 * Opens a left section
 	 *
+	 * @return  $this
 	 */
 	public function openLeftSection()
 	{
 		echo '<div class="fichethirdleft">';
+
+		return $this;
 	}
 
 	/**
 	 * Close a left section
 	 *
+	 * @return  $this
 	 */
 	public function closeLeftSection()
 	{
 		echo '</div>';
+
+		return $this;
 	}
 
 	/**
 	 * Opens a right section
 	 *
+	 * @return  $this
 	 */
 	public function openRightSection()
 	{
 		echo '<div class="fichetwothirdright"><div class="ficheaddleft">';
+
+		return $this;
 	}
 
 	/**
 	 * Close a right section
 	 *
+	 * @return  $this
 	 */
 	public function closeRightSection()
 	{
 		echo '</div></div>';
+
+		return $this;
 	}
 
 	/**
@@ -105,6 +120,7 @@ class IndexPage extends FormPage
 	 * @param     $url        form url
 	 * @param     $title      form title
 	 * @param     $summary    form summary
+	 * @return    $this
 	 */
 	public function addSearchForm($fields, $url, $title = 'Search', $summary = '')
 	{
@@ -123,12 +139,14 @@ class IndexPage extends FormPage
 			echo '<tr><td>'.$langs->trans($key);
 			echo '</td><td><input type="text" class="flat inputsearch" name="'.$value.'" size="18"'.$autofocus.'></td>';
 			if ($count == 0) {
-				echo '<td class="noborderbottom" rowspan="'.count($fields).'"><input type="submit" value="'.$langs->trans("Search").'" class="button"></td>';
+				echo '<td class="noborderbottom" rowspan="'.count($fields).'"><input type="submit" value="'.$langs->trans('Search').'" class="button"></td>';
 			}
 			echo '</tr>';
 			$count++;
 		}
 		echo "</table></form><br>\n";
+
+		return $this;
 	}
 
 	/**
@@ -140,6 +158,7 @@ class IndexPage extends FormPage
 	 * @param     $graph_type       Type of graph ('pie', 'bars', 'lines')
 	 * @param     $graph_title      Graph title
 	 * @param     $pk_field_name    Table primary key name
+	 * @return    $this
 	 */
 	public function addStatsGraph($table_name, $field_name, $field_values = array(), $graph_type = 'pie', $graph_title = 'Statistics', $pk_field_name = 'rowid')
 	{
@@ -203,32 +222,25 @@ class IndexPage extends FormPage
 			{
 				echo '<tr class="impair"><td align="center" colspan="2">';
 
-				$graph = new DolGraph();
-				$width = DolGraph::getDefaultGraphSizeForStats('width');
-				$height = DolGraph::getDefaultGraphSizeForStats('height');
-				$graph->SetData($dataseries);
-				if (in_array($graph_type, array('bars', 'lines'))) {
-					$graph->SetMaxValue($graph->GetCeilMaxValue());
-					$graph->SetMinValue(min(0, $graph->GetFloorMinValue()));
-				}
-				$graph->setShowLegend(1);
+				// Generate graph
+				$graph = new Chart();
+				$graph->generate($graph_type, $dataseries);
+				$graph->setShowLegend(1); // force show legend
 				$graph->setShowPercent(1);
-				$graph->SetType(array($graph_type));
-				$graph->setWidth($width);
-				$graph->setHeight($height);
-				$graph->draw('stats_'.($this->stats_id++));
-				echo $graph->show();
+				$graph->display('stats_'.($this->stats_id++));
 
 				echo '</td></tr>';
 			}
 
-			echo '<tr class="liste_total"><td>'.$langs->trans("Total").'</td><td align="right">'.$total.'</td></tr>';
-			echo "</table><br>";
+			echo '<tr class="liste_total"><td>'.$langs->trans('Total').'</td><td align="right">'.$total.'</td></tr>';
+			echo '</table><br>';
 		}
 		else
 		{
 			dol_print_error($db);
 		}
+
+		return $this;
 	}
 
 	/**
@@ -238,6 +250,7 @@ class IndexPage extends FormPage
 	 * @param     $legend           Legend array
 	 * @param     $graph_type       Type of graph ('pie', 'bars', 'lines')
 	 * @param     $graph_title      Graph title
+	 * @return    $this
 	 */
 	public function addStatsGraphFromData($data, $legend = array(), $graph_type = 'pie', $graph_title = 'Statistics')
 	{
@@ -248,28 +261,14 @@ class IndexPage extends FormPage
 		echo '<tr class="impair"><td align="center" colspan="2">';
 
 		// Generate graph
-		$graph = new DolGraph();
-		$width = DolGraph::getDefaultGraphSizeForStats('width');
-		$height = DolGraph::getDefaultGraphSizeForStats('height');
-		$show_legend = empty($legend) ? 0 : 1;
-		if (! $graph->isGraphKo())
-		{
-			$graph->SetData($data);
-			$graph->SetLegend($legend);
-			if (in_array($graph_type, array('bars', 'lines'))) {
-				$graph->SetMaxValue($graph->GetCeilMaxValue());
-				$graph->SetMinValue(min(0, $graph->GetFloorMinValue()));
-			}
-			$graph->setShowLegend($show_legend);
-			$graph->setShowPercent(1);
-			$graph->SetType(array($graph_type));
-			$graph->setWidth($width);
-			$graph->setHeight($height);
-			$graph->draw('stats_'.($this->stats_id++));
-			echo $graph->show();
-		}
+		$graph = new Chart();
+		$graph->generate($graph_type, $data, $legend);
+		$graph->setShowPercent(1);
+		$graph->display('stats_'.($this->stats_id++));
 
 		echo '</td></tr>';
 		echo "</table><br>";
+
+		return $this;
 	}
 }

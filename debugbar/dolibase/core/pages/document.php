@@ -15,7 +15,7 @@
  * 
  */
 
-dolibase_include_once('/core/class/page.php');
+dolibase_include_once('core/class/page.php');
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 
@@ -36,10 +36,10 @@ class DocumentPage extends Page
 		global $langs;
 
 		// Load lang files
-		$langs->load("other");
+		$langs->load('other');
 
 		// Add CSS files
-		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('/core/css/banner.css.php').'">'."\n");
+		$this->appendToHead('<link rel="stylesheet" type="text/css" href="'.dolibase_buildurl('core/css/banner.css.php').'">'."\n");
 
 		parent::__construct($page_title, $access_perm);
 	}
@@ -60,22 +60,26 @@ class DocumentPage extends Page
 	 * @param     $object         object
 	 * @param     $list_link      link to list
 	 * @param     $morehtmlleft   more html in the left
+	 * @return    $this
 	 */
 	public function showBanner($object, $list_link = '', $morehtmlleft = '')
 	{
 		global $langs;
 
-		$morehtml = (empty($list_link) ? '' : '<a href="'.dol_buildpath($list_link, 1).'">'.$langs->trans("BackToList").'</a>');
+		$morehtml = (empty($list_link) ? '' : '<a href="'.dol_buildpath($list_link, 1).'">'.$langs->trans('BackToList').'</a>');
 
 		dol_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', '', 0, $morehtmlleft);
 
 		echo '<div class="underbanner clearboth"></div>';
+
+		return $this;
 	}
 
 	/**
 	 * Return Tab title
 	 *
 	 * @param     $object         object
+	 * @return    string          tab title
 	 */
 	public static function getTabTitle($object)
 	{
@@ -96,6 +100,7 @@ class DocumentPage extends Page
 	 * Generate page beginning + print documents/linked files
 	 *
 	 * @param     $object         object
+	 * @return    $this
 	 */
 	public function begin($object = null)
 	{
@@ -120,13 +125,14 @@ class DocumentPage extends Page
 			}
 		}
 
-		parent::begin();
+		return parent::begin();
 	}
 
 	/**
 	 * Print documents/linked files
 	 *
 	 * @param     $object         object
+	 * @return    $this
 	 */
 	public function printDocuments($object)
 	{
@@ -155,8 +161,8 @@ class DocumentPage extends Page
 			echo '<table class="border" width="100%">';
 
 			// Files infos
-			echo '<tr><td class="titlefield">'.$langs->trans("NbOfAttachedFiles").'</td><td>'.count($filearray).'</td></tr>';
-			echo '<tr><td>'.$langs->trans("TotalSizeOfAttachedFiles").'</td><td>'.$totalsize.' '.$langs->trans("bytes").'</td></tr>';
+			echo '<tr><td class="titlefield">'.$langs->trans('NbOfAttachedFiles').'</td><td>'.count($filearray).'</td></tr>';
+			echo '<tr><td>'.$langs->trans('TotalSizeOfAttachedFiles').'</td><td>'.$totalsize.' '.$langs->trans('bytes').'</td></tr>';
 
 			echo "</table>\n";
 			echo '</div>';
@@ -168,5 +174,7 @@ class DocumentPage extends Page
 			$param        = '';
 			include_once DOL_DOCUMENT_ROOT . '/core/tpl/document_actions_post_headers.tpl.php';
 		}
+
+		return $this;
 	}
 }

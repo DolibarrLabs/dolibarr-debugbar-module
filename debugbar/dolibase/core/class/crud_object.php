@@ -19,9 +19,11 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/commonobject.class.php';
 
 /**
  * CrudObject class (Create/Read/Update/Delete)
+ *
+ * @deprecated since version 2.8.0, use QueryBuilder class instead
  */
 
-class CrudObject extends CommonObject
+abstract class CrudObject extends CommonObject
 {
 	/**
 	 * @var string Id to identify managed object
@@ -48,17 +50,9 @@ class CrudObject extends CommonObject
 	 */
 	public $ref_field_name = 'ref';
 	/**
-	 * @var array Object lines (used in fetchAll function)
+	 * @var array Object rows (used in fetchAll function)
 	 */
-	public $lines = array();
-	/**
-	 * @var int Total number of records (used in fetchAll function)
-	 */
-	public $total = 0;
-	/**
-	 * @var int Total number of fetched records (used in fetchAll function)
-	 */
-	public $count = 0;
+	public $rows = array();
 	/**
 	 * @var string Triggers prefix
 	 */
@@ -81,10 +75,13 @@ class CrudObject extends CommonObject
 	 * Set table name
 	 * 
 	 * @param  $table_name  table name
+	 * @return $this
 	 */
 	public function setTableName($table_name)
 	{
 		$this->table_element = $table_name;
+
+		return $this;
 	}
 
 	/**
@@ -177,18 +174,19 @@ class CrudObject extends CommonObject
 			if ($this->db->num_rows($resql)) {
 				$obj = $this->db->fetch_object($resql);
 
-				foreach ($this->fetch_fields as $field) {
-					$this->$field = $obj->$field;
+				foreach ($this->fetch_fields as $field)
+				{
+					if (in_array($field, $this->date_fields)) {
+						$this->$field = $this->db->jdate($obj->$field); // Fix error: dol_print_date function call with deprecated value of time
+					}
+					else {
+						$this->$field = $obj->$field;
+					}
 				}
 
-				// enssure that $this->id is filled because we use it in update & delete functions
+				// ensure that $this->id is filled because we use it in update & delete functions
 				if (! in_array('id', $this->fetch_fields)) {
 					$this->id = $obj->{$this->pk_name};
-				}
-
-				// Fix error: dol_print_date function call with deprecated value of time
-				foreach ($this->date_fields as $field) {
-					$this->$field = $this->db->jdate($this->$field);
 				}
 
 				$this->db->free($resql);
@@ -208,23 +206,26 @@ class CrudObject extends CommonObject
 	}
 
 	/**
-	 * Load all object entries in memory from database
+	 * Load object in memory from database (wrapper for fetchAll function)
 	 *
-	 * @param  int     $limit        fetch limit
-	 * @param  int     $offset       fetch offset
-	 * @param  string  $sort_field   field to sort by
-	 * @param  string  $sort_order   sort order: 'DESC' or 'ASC'
-	 * @param  string  $more_fields  more fields to fetch
-	 * @param  string  $join         join clause
 	 * @param  string  $where        where clause (without 'WHERE')
-	 * @param  boolean $get_total    get total number of records or not
-	 * @param  boolean $table_alias  Alias to use for table name, leave it empty if you won't
 	 * @return int                   <0 if KO, >0 if OK
 	 */
-	public function fetchAll($limit = 0, $offset = 0, $sort_field = '', $sort_order = 'DESC', $more_fields = '', $join = '', $where = '', $get_total = false, $table_alias = 't')
+	public function fetchWhere($where)
 	{
-		// Init lines
-		$this->lines = array();
+		return $this->fetchAll($where);
+	}
+
+	/**
+	 * Load all object entries in memory from database
+	 *
+	 * @param  string  $where        where clause (without 'WHERE')
+	 * @return int                   <0 if KO, >0 if OK
+	 */
+	public function fetchAll($where = '')
+	{
+		// Init rows
+		$this->rows = array();
 
 		if (empty($this->fetch_fields)) {
 			return 0;
@@ -233,45 +234,18 @@ class CrudObject extends CommonObject
 		// SELECT request
 		$sql = "SELECT DISTINCT ";
 		foreach ($this->fetch_fields as $field) {
-			$sql.= (! empty($table_alias) ? $table_alias.'.' : '')."`" . $field . "`,";
+			$sql.= "`" . $field . "`,";
 		}
 		$sql = substr($sql, 0, -1); // Remove the last ','
-		if (! empty($more_fields)) {
-			$sql.= $more_fields[0] == ',' ? $more_fields : ', ' . $more_fields;
-		}
 		$sql.= " FROM " . MAIN_DB_PREFIX . $this->table_element;
-		if (! empty($table_alias)) $sql.= " as ".$table_alias;
-		if (! empty($join)) $sql.= $join;
-		if (! empty($where)) $sql.= " WHERE ".$where;
-		if (! empty($sort_field)) $sql.= $this->db->order($sort_field, $sort_order);
-		if ($get_total) {
-			global $conf;
-			$this->total = 0;
-			if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
-			{
-				$result = $this->db->query($sql);
-				if ($result) {
-					$this->total = $this->db->num_rows($result);
-				}
-			}
-		}
-		if ($limit > 0) {
-			if ($get_total) {
-				$sql.= $this->db->plimit($limit+1, $offset); // for list pagination
-			}
-			else {
-				$sql.= $this->db->plimit($limit, $offset);
-			}
-		}
+		if (! empty($where)) $sql.= " WHERE " . $where;
 
 		dol_syslog(__METHOD__ . " sql=" . $sql, LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
-			$this->count = $this->db->num_rows($resql);
-			if ($this->count)
-			{
+			$num = $this->db->num_rows($resql);
+			if ($num) {
 				$i = 0;
-				$num = ($get_total ? min($this->count, $limit) : $this->count); // also for list pagination
 				$set_id = (! in_array('id', $this->fetch_fields) ? true : false);
 
 				while ($i < $num)
@@ -280,98 +254,24 @@ class CrudObject extends CommonObject
 
 					$classname = get_class($this);
 
-					$this->lines[$i] = new $classname();
+					$this->rows[$i] = new $classname();
 
-					foreach ($this->fetch_fields as $field) {
-						$this->lines[$i]->$field = $obj->$field;
-					}
-
-					if (! empty($more_fields)) 
+					foreach ($this->fetch_fields as $field)
 					{
-						$fields = explode(',', $more_fields);
-
-						foreach ($fields as $field) 
-						{
-							$field = trim($field);
-
-							if (! empty($field))
-							{
-								// check for ' as ' alias
-								$pos = stripos($field, ' as ');
-								if ($pos !== false) {
-									$field = substr($field, $pos + 4); // 4 == strlen(' as ')
-								}
-								// add field
-								$this->lines[$i]->$field = $obj->$field;
-							}
+						if (in_array($field, $this->date_fields)) {
+							$this->rows[$i]->$field = $this->db->jdate($obj->$field); // Fix error: dol_print_date function call with deprecated value of time
+						}
+						else {
+							$this->rows[$i]->$field = $obj->$field;
 						}
 					}
 
-					// enssure that $this->id is filled because we use it in update/delete/getNomUrl functions
+					// ensure that $this->id is filled because we use it in update/delete/getNomUrl functions
 					if ($set_id) {
-						$this->lines[$i]->id = $obj->{$this->pk_name};
-					}
-
-					// Fix error: dol_print_date function call with deprecated value of time
-					foreach ($this->date_fields as $field) {
-						$this->lines[$i]->$field = $this->db->jdate($this->lines[$i]->$field);
+						$this->rows[$i]->id = $obj->{$this->pk_name};
 					}
 
 					$i++;
-				}
-
-				$this->db->free($resql);
-
-				return 1;
-			}
-			$this->db->free($resql);
-
-			return 0;
-		} else {
-			$this->error = "Error " . $this->db->lasterror();
-			dol_syslog(__METHOD__ . " " . $this->error, LOG_ERR);
-			setEventMessage($this->error, 'errors');
-
-			return -1;
-		}
-	}
-
-	/**
-	 * Load object in memory from database
-	 *
-	 * @param  array   $fields       fields to fetch
-	 * @param  array   $conditions   fetch conditions
-	 * @return int     <0 if KO, >0 if OK
-	 */
-	public function fetchWhere($fields, $conditions = array())
-	{
-		// SELECT request
-		$sql = "SELECT ";
-		foreach ($fields as $field) {
-			$sql.= "`" . $field . "`,";
-		}
-		$sql = substr($sql, 0, -1); // Remove the last ','
-		$sql.= " FROM " . MAIN_DB_PREFIX . $this->table_element;
-		$sql.= " WHERE ";
-		$i = 0;
-		foreach ($conditions as $field => $value) {
-			$sql.= ($i > 0 ? ' AND ' : '') . $field . " = '" . $value . "'";
-			$i++;
-		}
-
-		dol_syslog(__METHOD__ . " sql=" . $sql, LOG_DEBUG);
-		$resql = $this->db->query($sql);
-		if ($resql) {
-			if ($this->db->num_rows($resql)) {
-				$obj = $this->db->fetch_object($resql);
-
-				foreach ($fields as $field) {
-					$this->$field = $obj->$field;
-				}
-
-				// enssure that $this->id is filled because we use it in update & delete functions
-				if (! in_array('id', $fields)) {
-					$this->id = $obj->{$this->pk_name};
 				}
 
 				$this->db->free($resql);
@@ -602,7 +502,7 @@ class CrudObject extends CommonObject
 				$sql = "DELETE FROM " . MAIN_DB_PREFIX . $this->table_element;
 				$sql.= " WHERE ".$where;
 				// Fetch rows ids before deleting
-				$this->fetchAll(0, 0, '', 'DESC', '', '', $where, false, '');
+				$this->fetchWhere($where);
 			}
 
 			dol_syslog(__METHOD__ . " sql=" . $sql);
@@ -617,7 +517,7 @@ class CrudObject extends CommonObject
 					$this->deleteAllObjectLinked();
 				}
 				else {
-					foreach ($this->lines as $obj) {
+					foreach ($this->rows as $obj) {
 						$obj->deleteObjectLinked();
 					}
 				}
@@ -668,6 +568,7 @@ class CrudObject extends CommonObject
 	 * Escape field value
 	 *
 	 * @param     $value     field value
+	 * @return    string     escaped value
 	 */
 	protected function escape($value)
 	{

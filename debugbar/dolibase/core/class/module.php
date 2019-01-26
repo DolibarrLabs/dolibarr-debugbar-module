@@ -72,7 +72,7 @@ class DolibaseModule extends DolibarrModules
 		$this->config = $dolibase_config;
 
 		// Load lang files
-		$langs->load("module@".$this->config['langs']['path']);
+		$langs->load('module@'.$this->config['langs']['path']);
 
 		// Module configuration
 		$this->db              = $db;
@@ -84,7 +84,7 @@ class DolibaseModule extends DolibarrModules
 		$this->module_position = $this->config['module']['position'];
 		$this->name            = $this->config['module']['name'];
 		$this->description     = $this->config['module']['desc'];
-		$this->version         = $this->config['module']['version'];
+		$this->version         = ($this->config['module']['version'] == 'dolibase' ? $this->config['main']['version'] : $this->config['module']['version']);
 		$this->const_name      = "MAIN_MODULE_".strtoupper($this->name);
 		$this->special         = 0;
 		$this->picto           = $this->config['module']['picture']."@".$this->config['module']['folder'];
@@ -182,7 +182,7 @@ class DolibaseModule extends DolibarrModules
 				// If a new version is available
 				if (isset($module_version[1]) && compare_version($module_version[1], '>', $this->config['module']['version']))
 				{
-					$this->version .= ' <a href="'.$this->config['module']['url'].'" title="'.$langs->trans('NewVersionAvailable', $module_version[1]).'" target="_blank"><img src="'.dolibase_buildurl('/core/img/update.png').'" class="valignmiddle" width="24" alt="'.$module_version[1].'"></a>';
+					$this->version .= ' <a href="'.$this->config['module']['url'].'" title="'.$langs->trans('NewVersionAvailable', $module_version[1]).'" target="_blank"><img src="'.dolibase_buildurl('core/img/update.png').'" class="valignmiddle" width="24" alt="'.$module_version[1].'"></a>';
 				}
 			}
 		}
@@ -209,7 +209,53 @@ class DolibaseModule extends DolibarrModules
 		// Set addons
 		$this->setAddons();
 
+		// Enable module for external users
+		if (isset($this->config['module']['enable_for_external_users']) && $this->config['module']['enable_for_external_users']) {
+			$this->enableModuleForExternalUsers($this->config['module']['rights_class']);
+		}
+
 		return $this->_init($sql, $options);
+	}
+
+	/**
+	 * Enable module for external users
+	 *
+	 * @param     $module_rights_class     Module rights class
+	 */
+	protected function enableModuleForExternalUsers($module_rights_class)
+	{
+		global $conf;
+
+		if (empty($conf->global->MAIN_MODULES_FOR_EXTERNAL) || strpos($conf->global->MAIN_MODULES_FOR_EXTERNAL, $module_rights_class) === false) {
+			$value = empty($conf->global->MAIN_MODULES_FOR_EXTERNAL) ? $module_rights_class : join(',', array($conf->global->MAIN_MODULES_FOR_EXTERNAL, $module_rights_class));
+			dolibarr_set_const($this->db, 'MAIN_MODULES_FOR_EXTERNAL', $value, 'chaine', 1, '', $conf->entity);
+		}
+	}
+
+	/**
+	 * Disable module for external users
+	 *
+	 * @param     $module_rights_class     Module rights class
+	 */
+	protected function disableModuleForExternalUsers($module_rights_class)
+	{
+		global $conf;
+
+		if (! empty($conf->global->MAIN_MODULES_FOR_EXTERNAL)) {
+			$modules_list = explode(',', $conf->global->MAIN_MODULES_FOR_EXTERNAL);
+			$found = false;
+			foreach ($modules_list as $key => $value)
+			{
+				if ($value == $module_rights_class) {
+					unset($modules_list[$key]);
+					$found = true;
+				}
+			}
+			if ($found) {
+				$value = empty($modules_list) ? '' : join(',', $modules_list);
+				dolibarr_set_const($this->db, 'MAIN_MODULES_FOR_EXTERNAL', $value, 'chaine', 1, '', $conf->entity);
+			}
+		}
 	}
 
 	/**
@@ -268,6 +314,11 @@ class DolibaseModule extends DolibarrModules
 	{
 		$sql = array();
 
+		// Disable module for external users
+		if (isset($this->config['module']['enable_for_external_users']) && ! $this->config['module']['enable_for_external_users']) {
+			$this->disableModuleForExternalUsers($this->config['module']['rights_class']);
+		}
+
 		return $this->_remove($sql, $options);
 	}
 
@@ -278,6 +329,7 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $value    constant value
 	 * @param     $desc     constant description / note
 	 * @param     $type     constant type
+	 * @return    $this
 	 */
 	public function addConstant($name, $value, $desc = '', $type = 'chaine')
 	{
@@ -290,6 +342,8 @@ class DolibaseModule extends DolibarrModules
 			5 => 'current', // entity 'current' or 'allentities'
 			6 => 0 // delete constant when module is disabled
 		);
+
+		return $this;
 	}
 
 	/**
@@ -298,6 +352,7 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $widget_filename           widget filename
 	 * @param     $note                      widget note
 	 * @param     $enabled_by_default_on     where to enable the widget by default
+	 * @return    $this
 	 */
 	public function addWidget($widget_filename, $note = '', $enabled_by_default_on = 'Home')
 	{
@@ -306,6 +361,8 @@ class DolibaseModule extends DolibarrModules
 			'note' => $note,
 			'enabledbydefaulton' => $enabled_by_default_on
 		);
+
+		return $this;
 	}
 
 	/**
@@ -315,6 +372,7 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $desc                   permission description
 	 * @param     $type                   permission type: 'r', 'c', 'm', 'd'
 	 * @param     $enabled_by_default     enable the permission by default for all users
+	 * @return    $this
 	 */
 	public function addPermission($name, $desc = '', $type = '', $enabled_by_default = 1)
 	{
@@ -325,6 +383,8 @@ class DolibaseModule extends DolibarrModules
 			3 => $enabled_by_default,
 			4 => $name
 		);
+
+		return $this;
 	}
 
 	/**
@@ -335,6 +395,7 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $desc                   permission description
 	 * @param     $type                   permission type: 'r', 'c', 'm', 'd'
 	 * @param     $enabled_by_default     enable the permission by default for all users
+	 * @return    $this
 	 */
 	public function addSubPermission($perm_name, $subperm_name, $desc = '', $type = '', $enabled_by_default = 1)
 	{
@@ -352,6 +413,8 @@ class DolibaseModule extends DolibarrModules
 			4 => $perm_name,
 			5 => $subperm_name
 		);
+
+		return $this;
 	}
 
 	/**
@@ -374,10 +437,13 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $enabled   should the menu be always enabled or use conditions like '$conf->monmodule->enabled'
 	 * @param     $position  menu position
 	 * @param     $target    menu target, leave empty or use '_blank' to open in a new window / tab
+	 * @return    $this
 	 */
 	public function addTopMenu($name, $title, $url, $perms = '1', $enabled = '1', $position = 100, $target = '')
 	{
 		$this->addMenu('top', 0, $name, '', $title, $url, $position, $enabled, $perms, $target);
+
+		return $this;
 	}
 
 	/**
@@ -391,10 +457,13 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $enabled      should the menu be always enabled or use conditions like '$conf->monmodule->enabled'
 	 * @param     $position     menu position
 	 * @param     $target       menu target, leave empty or use '_blank' to open in a new window / tab
+	 * @return    $this
 	 */
 	public function addLeftMenu($main_menu, $name, $title, $url, $perms = '1', $enabled = '1', $position = 100, $target = '')
 	{
 		$this->addMenu('left', 'fk_mainmenu='.$main_menu, $main_menu, $name, $title, $url, $position, $enabled, $perms, $target);
+
+		return $this;
 	}
 
 	/**
@@ -409,10 +478,13 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $enabled      should the menu be always enabled or use conditions like '$conf->monmodule->enabled'
 	 * @param     $position     menu position
 	 * @param     $target       menu target, leave empty or use '_blank' to open in a new window / tab
+	 * @return    $this
 	 */
 	public function addLeftSubMenu($main_menu, $left_menu, $name, $title, $url, $perms = '1', $enabled = '1', $position = 100, $target = '')
 	{
 		$this->addMenu('left', 'fk_mainmenu='.$main_menu.',fk_leftmenu='.$left_menu, $main_menu, $name, $title, $url, $position, $enabled, $perms, $target);
+
+		return $this;
 	}
 
 	/**
@@ -432,18 +504,18 @@ class DolibaseModule extends DolibarrModules
 	protected function addMenu($type, $fk_menu, $main_menu, $left_menu, $title, $url, $position, $enabled = '1', $perms = '1', $target = '')
 	{
 		$this->menu[] = array(
-					'fk_menu' => $fk_menu,
-					'type' => $type,
-					'titre' => $title,
-					'mainmenu' => $main_menu,
-					'leftmenu' => $left_menu,
-					'url' => $url,
-					'langs' => $this->config['other']['menu_lang_file'],
-					'position' => $position,
-					'enabled' => $enabled,
-					'perms' => $perms,
-					'target' => $target,
-					'user' => 2 // 0=Menu for internal users, 1=external users, 2=both
+			'fk_menu' => $fk_menu,
+			'type' => $type,
+			'titre' => $title,
+			'mainmenu' => $main_menu,
+			'leftmenu' => $left_menu,
+			'url' => $url,
+			'langs' => $this->config['other']['menu_lang_file'],
+			'position' => $position,
+			'enabled' => $enabled,
+			'perms' => $perms,
+			'target' => $target,
+			'user' => 2 // 0=Menu for internal users, 1=external users, 2=both
 		);
 	}
 
@@ -451,75 +523,96 @@ class DolibaseModule extends DolibarrModules
 	 * Add a CSS file
 	 *
 	 * @param     $css_filename     css filename
+	 * @return    $this
 	 */
 	public function addCssFile($css_filename)
 	{
 		$this->addModulePart('css', $this->config['module']['folder'].'/css/'.$css_filename);
+
+		return $this;
 	}
 
 	/**
 	 * Add an array of CSS files
 	 *
 	 * @param     $css_files_array     css files array
+	 * @return    $this
 	 */
 	public function addCssFiles($css_files_array)
 	{
 		foreach ($css_files_array as $css_file) {
 			$this->addCssFile($css_file);
 		}
+
+		return $this;
 	}
 
 	/**
 	 * Add a JS file
 	 *
 	 * @param     $js_filename     javascript filename
+	 * @return    $this
 	 */
 	public function addJsFile($js_filename)
 	{
 		$this->addModulePart('js', $this->config['module']['folder'].'/js/'.$js_filename);
+
+		return $this;
 	}
 
 	/**
 	 * Add an array of JS files
 	 *
 	 * @param     $js_files_array     javascript files array
+	 * @return    $this
 	 */
 	public function addJsFiles($js_files_array)
 	{
 		foreach ($js_files_array as $js_file) {
 			$this->addJsFile($js_file);
 		}
+
+		return $this;
 	}
 
 	/**
 	 * Enable a hook
 	 *
 	 * @param     $hook      dolibarr hook name: 'toprightmenu', 'main', ...
+	 * @return    $this
 	 */
 	public function enableHook($hook)
 	{
 		$this->addModulePart('hooks', $hook);
+
+		return $this;
 	}
 
 	/**
 	 * Enable an array of hooks
 	 *
 	 * @param     $hooks_array      hooks array
+	 * @return    $this
 	 */
 	public function enableHooks($hooks_array)
 	{
 		foreach ($hooks_array as $hook) {
 			$this->enableHook($hook);
 		}
+
+		return $this;
 	}
 
 	/**
 	 * Enable triggers
 	 *
+	 * @return    $this
 	 */
 	public function enableTriggers()
 	{
 		$this->module_parts['triggers'] = 1;
+
+		return $this;
 	}
 
 	/**
@@ -534,6 +627,7 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $fields_to_insert       fields to insert on dict page (no spaces), e.: 'code,label'
 	 * @param     $table_pk_field         table primary key field
 	 * @param     $fields_help            fields help summary or link, e.: array('code' => 'summary..', 'label' => 'summary..')
+	 * @return    $this
 	 */
 	public function addDictionary($table_name, $table_label, $select_fields = 'rowid, label, active', $table_sort = 'label ASC', $fields_to_show = 'label', $fields_to_update = 'label', $fields_to_insert = 'label', $table_pk_field = 'rowid', $fields_help = array())
 	{
@@ -556,6 +650,8 @@ class DolibaseModule extends DolibarrModules
 		$this->dictionaries['tabrowid'][]       = $table_pk_field;
 		$this->dictionaries['tabcond'][]        = $conf->$modulepart->enabled;
 		$this->dictionaries['tabhelp'][]        = $fields_help;
+
+		return $this;
 	}
 
 	/**
@@ -574,10 +670,13 @@ class DolibaseModule extends DolibarrModules
 	 *
 	 * @param     $name             numbering model name
 	 * @param     $const_prefix     numbering model constant prefix
+	 * @return    $this
 	 */
 	public function activateNumModel($name, $const_prefix = '')
 	{
 		$this->addons['num'][] = array('name' => $name, 'const_prefix' => $const_prefix);
+
+		return $this;
 	}
 
 	/**
@@ -586,10 +685,13 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $name             document model name
 	 * @param     $type             document model type
 	 * @param     $const_prefix     document model constant prefix
+	 * @return    $this
 	 */
 	public function activateDocModel($name, $type = '', $const_prefix = '')
 	{
 		$this->addons['doc'][] = array('name' => $name, 'type' => $type, 'const_prefix' => $const_prefix);
+
+		return $this;
 	}
 
 	/**
@@ -637,10 +739,13 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $comment               Job comment
 	 * @param     $priority              Job priority (number from 0 to 100)
 	 * @param     $status                Job status at module installation: 0 = disabled, 1 = enabled
+	 * @return    $this
 	 */
 	public function addCronCommand($label, $command, $frequency, $frequency_unit, $comment = '', $priority = 0, $status = 1)
 	{
 		$this->addCronJob($label, 'command', $command, '', '', '', '', $comment, $frequency, $frequency_unit, $status, $priority);
+
+		return $this;
 	}
 
 	/**
@@ -656,11 +761,14 @@ class DolibaseModule extends DolibarrModules
 	 * @param     $comment               Job comment
 	 * @param     $priority              Job priority (number from 0 to 100)
 	 * @param     $status                Job status at module installation: 0 = disabled, 1 = enabled
+	 * @return    $this
 	 */
 	public function addCronMethod($label, $class, $object_name, $object_method, $method_parameters, $frequency, $frequency_unit, $comment = '', $priority = 0, $status = 1)
 	{
 		$this->addCronJob($label, 'method', '', $class, $object_name, $object_method, $method_parameters, $comment, $frequency, $frequency_unit, $status, $priority);
+
+		return $this;
 	}
 }
 
-}
+} // end if (! class_exists('DolibaseModule'))
