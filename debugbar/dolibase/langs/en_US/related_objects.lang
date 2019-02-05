@@ -1,8 +1,0 @@
-# Dolibase Related objects - en_US
-#
-# Copyright (C) 2018 AXeL
-
-AddRelated = Add link
-ElementToLink = Expanded Links
-RelationAdded = Linked
-RelationCantBeAdded = Failed

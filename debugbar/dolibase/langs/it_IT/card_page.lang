@@ -1,8 +1,0 @@
-# Dolibase Card Page - it_IT
-#
-# Copyright (C) 2018 AXeL
-
-SaveAs = Salva come
-SendByMail = Invia per posta
-MailSubject = Presentazione del documento __REF__
-MailTemplate = Ciao,\n\nTroverete qui il documento __REF__.\n\nCordiali saluti\n\n__SIGNATURE__

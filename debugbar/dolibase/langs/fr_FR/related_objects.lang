@@ -1,8 +1,0 @@
-# Dolibase Related objects - fr_FR
-#
-# Copyright (C) 2018 AXeL
-
-AddRelated = Ajouter ce lien
-ElementToLink = Elements particuliers liés
-RelationAdded = Relation ajoutée
-RelationCantBeAdded = Échec
