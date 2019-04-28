@@ -22,11 +22,11 @@ Here is a basic usage example of the DebugBar:
 // Require Dolibarr main file
 require '../main.inc.php';
 
-// Tell PHP that we want to use the debugbar var defined in main.inc.php
+// Tell PHP that we want to use the debugbar variable defined in main.inc.php
 global $debugbar;
 
 // Add a message to debugbar
-$debugbar["messages"]->addMessage("hello world!");
+$debugbar['messages']->addMessage('hello world!');
 
 ?>
 ```
