@@ -89,7 +89,7 @@ if (! function_exists('dolibase_include_once'))
 	function dolibase_include_once($component_path, $class_name = '')
 	{
 		if (empty($class_name) || ! class_exists($class_name)) {
-			@include_once dolibase_buildpath($component_path); // @ is used to skip warnings..
+			include_once dolibase_buildpath($component_path);
 		}
 	}
 }
@@ -375,7 +375,7 @@ if (! function_exists('get_func_output'))
 }
 
 /**
- * Add a flash message to session
+ * Add a flash message to session.
  * Note: message rendering will be done by $page->end() or more exactly llxFooter() function
  *
  * @param     $message     Message
@@ -661,5 +661,21 @@ if (! function_exists('js_enabled'))
 		global $conf;
 
 		return (! empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile));
+	}
+}
+
+/**
+ * Return current module path
+ *
+ * @param     $as_url    Return path as url
+ * @return    string     Module path
+ */
+if (! function_exists('get_module_path'))
+{
+	function get_module_path($as_url = false)
+	{
+		global $dolibase_config;
+
+		return dol_buildpath($dolibase_config['module']['folder'], ($as_url ? 1 : 0));
 	}
 }
