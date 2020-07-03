@@ -7,22 +7,23 @@ global $dolibase_config;
  */
 
 $dolibase_config['module'] = array(
-	'name'         => 'DebugBar',
-	'desc'         => 'DebugBarDesc',
-	'version'      => '2.0', // possible values: 'development', 'experimental', 'dolibarr' or version
-	'number'       => '447000', // e.: 110000 (avoid small numbers because they are used for core modules)
-	'family'       => 'base', // possible values: 'crm', 'financial', 'hr', 'projects', 'products', 'ecm', 'technic', 'other'
-	'position'     => 500,
-	'rights_class' => 'debugbar', // key to reference module (for permissions, menus, etc.)
-	'url'          => 'https://www.dolistore.com/en/modules/996-Debug-bar.html', // e.: 'https://www.dolistore.com/my_module'
-	'folder'       => 'debugbar', // advice: never use underscores in module folder name to avoid many problems especially with top menu icon, module widgets etc..
-	'picture'      => 'debugbar.png', // your picture file should have 'object_' prefix to work
-	'dirs'         => array(), // directories to create when activating the module, e.: array('/modulefoldername/temp')
-	'dolibarr_min' => array(3, 8), // minimum Dolibarr version, e.: array(6, 0)
-	'php_min'      => array(5, 0), // minimum PHP version, e.: array(4, 0)
-	'depends'      => array(), // modules to activate when this one is activated, e.: array('modProduct')
-	'required_by'  => array(), // modules to disable if this one is disabled, e.: array('modFacture')
-	'conflit_with' => array() // modules who are in conflict with this module, e.: array('modProduct')
+	'name'          => 'DebugBar',
+	'desc'          => 'DebugBarDesc',
+	'version'       => '2.1', // possible values: 'development', 'experimental', 'dolibarr' or version
+	'number'        => '447000', // e.: 110000 (avoid small numbers because they are used for core modules)
+	'family'        => 'base', // possible values: 'crm', 'financial', 'hr', 'projects', 'products', 'ecm', 'technic', 'other'
+	'position'      => 500,
+	'rights_class'  => 'debugbar', // key to reference module (for permissions, menus, etc.)
+	'url'           => 'https://www.dolistore.com/en/modules/996-Debug-bar.html', // e.: 'https://www.dolistore.com/my_module'
+	'folder'        => 'debugbar', // advice: never use underscores in module folder name to avoid many problems especially with top menu icon, module widgets etc..
+	'picture'       => 'debugbar.png', // your picture file should have 'object_' prefix to work
+	'dirs'          => array(), // directories to create when activating the module, e.: array('/modulefoldername/temp')
+	'dolibarr_min'  => array(3, 8), // minimum Dolibarr version, e.: array(6, 0)
+	'php_min'       => array(5, 0), // minimum PHP version, e.: array(4, 0)
+	'depends'       => array(), // modules to activate when this one is activated, e.: array('modProduct')
+	'required_by'   => array(), // modules to disable if this one is disabled, e.: array('modFacture')
+	'conflit_with'  => array(), // modules who are in conflict with this module, e.: array('modProduct')
+	'check_updates' => false
 );
 
 /**
